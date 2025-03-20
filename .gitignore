@@ -7,5 +7,5 @@
 
 .Ds_Store
 .idea/
-
+/morphem/__pycache__/
 

@@ -10,9 +10,11 @@ import skimage
 import importlib
 from tqdm import tqdm
 
+from vision_transformer import vit_small
 from torchvision.models import resnet18, ResNet18_Weights
 from timm import create_model
 import torch.nn.functional as F
+import sys
 
 import argparse
 
@@ -29,20 +31,35 @@ def configure_dataset(root_dir, dataset_name):
 
     return dataset
 
-
+import torch
+import timm  # If you used timm to define your ViT
 
 class ViTClass():
     def __init__(self, gpu):
         self.device = f"cuda:{gpu}" if torch.cuda.is_available() else 'cpu'
 
-        self.dinov2_vits14_reg = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14_reg')
-        self.dinov2_vits14_reg.eval()
-        self.dinov2_vits14_reg.to(self.device)
+        # Create model with in_chans=1 to match training setup
+        self.model = vit_small()
+        remove_prefixes = ["module.backbone.", "module.", "module.head."]
 
-   
+        # Load model weights
+        student_model = torch.load("/scr/vidit/Foundation_Models/model_weights/LR_0.0005_GuidedCrop/checkpoint.pth")['student']
+        # Remove unwanted prefixes
+        cleaned_state_dict = {}
+        for k, v in student_model.items():
+            new_key = k
+            for prefix in remove_prefixes:
+                if new_key.startswith(prefix):
+                    new_key = new_key[len(prefix):]  # Remove prefix
+            if not new_key.startswith("head.mlp") and not new_key.startswith("head.last_layer"):
+                cleaned_state_dict[new_key] = v  # Keep only valid keys
+        self.model.load_state_dict(cleaned_state_dict, strict=False)
+        self.model.eval()
+        self.model.to(self.device)
+
     def get_model(self):
+        return self.model
 
-        return self.dinov2_vits14_reg
 
 
 
@@ -114,30 +131,14 @@ def create_pad(images, patch_width, patch_height): # new method for vit model
     return padded_images
 
 
-
-
-
-
-
 def get_save_features(feature_dir, root_dir, model_check, gpu, batch_size):
     dataset_names = ['Allen', 'CP', 'HPA']
     device = torch.device(f"cuda:{gpu}" if torch.cuda.is_available() else "cpu")
     
-    if model_check == "resnet":
-        weights, feature_extractor = ResNetClass.resnet_model(gpu)
-        preprocess = weights.transforms()
-        feature_file = 'pretrained_resnet18_features.npy'
 
-        
-    elif model_check == "convnext":
-        
-        convnext_instance = ConvNextClass(gpu)
-        feature_file = 'pretrained_convnext_channel_replicate.npy'
-
-    else:
-        vit_instance = ViTClass(gpu) 
-        vit_model = vit_instance.get_model() 
-        feature_file = 'pretrained_vit_features.npy'
+    vit_instance = ViTClass(gpu) 
+    vit_model = vit_instance.get_model() 
+    feature_file = 'pretrained_vit_features.npy'
         
         
     for dataset_name in dataset_names:
@@ -156,29 +157,18 @@ def get_save_features(feature_dir, root_dir, model_check, gpu, batch_size):
                 # Extract kernel size (patch size)
                 patch_size = conv_layer.kernel_size
                 patch_height, patch_width = patch_size
-                
                 images = create_pad(images, patch_width, patch_height)
 
             
             cloned_images = images.clone()
             batch_feat = []
-            for i in range(cloned_images.shape[1]):
-                # Copy each channel three times 
-                channel = cloned_images[:, i, :, :]
-                channel = channel.unsqueeze(1)
-                expanded = channel.expand(-1, 3, -1, -1)
-        
-                if model_check == "resnet":
-                    expanded = preprocess(expanded).to(device)
-                    feat_temp = feature_extractor(expanded).cpu().detach().numpy()
-                    
-                elif model_check == "convnext": 
-                    feat_temp = convnext_instance.forward((expanded).to(device)).cpu().detach().numpy()
-
-                else:
-                    output = vit_model.forward_features((expanded).to(device))
-                    feat_temp = output["x_norm_clstoken"].cpu().detach().numpy()
-                   
+            for c in range(cloned_images.shape[1]):
+                # Copy each channel three times
+                single_channel = images[:, c, :, :].unsqueeze(1).to(device)
+    
+                output = vit_model.forward_features((single_channel).to(device))
+                feat_temp = output["x_norm_clstoken"].cpu().detach().numpy()
+                
                     
 
                 batch_feat.append(feat_temp)
