@@ -30,7 +30,7 @@ from torchvision import datasets, transforms
 transform = v2.Compose([
     v2.CenterCrop(224),
     v2.ToTensor(),
-    v2.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    v2.Normalize([0.485], [0.229])
 ])
 
 config = dataset_config.DatasetConfig(
@@ -102,9 +102,11 @@ vit_model = vit_instance.get_model()
 
 feature_file = 'pretrained_vit_features.npy'
 all_features = []
+all_filepaths = []  # New list to store image file names
+
 
 # Loop through the DataLoader and process each batch.
-for images in tqdm(data_loader, total=len(data_loader)):
+for images, filepath in tqdm(data_loader, total=len(data_loader)):
     # Get the patch embedding module and extract the convolutional layer.
     images = images.to(torch.float32)
     patch_embed = vit_model.patch_embed
@@ -117,24 +119,27 @@ for images in tqdm(data_loader, total=len(data_loader)):
     
     # For each batch, process each channel separately.
     batch_features = []
-    for c in range(images.shape[1]):
-        # Select the c-th channel, add a channel dimension, and move to the appropriate device.
-        single_channel = images[:, c, :, :].unsqueeze(1).to(device)
-        # Forward pass through the model without tracking gradients.
-        with torch.no_grad():
-            output = vit_model.forward_features(single_channel)
-        # Extract the normalized class token feature from the model output.
-        feat = output["x_norm_clstoken"].cpu().numpy()  # shape: [batch_size, feature_dim]
-        batch_features.append(feat)
+
+    # Select the c-th channel, add a channel dimension, and move to the appropriate device.
+    single_channel = images.to(device)
+    # Forward pass through the model without tracking gradients.
+    with torch.no_grad():
+        output = vit_model.forward_features(single_channel)
+    # Extract the normalized class token feature from the model output.
+    feat = output["x_norm_clstoken"].cpu().numpy()  # shape: [batch_size, feature_dim]
+    batch_features.append(feat)
     
     # Concatenate features along the feature dimension (axis=1).
     batch_features = np.concatenate(batch_features, axis=1)
+
     all_features.append(batch_features)
+    all_filepaths.extend(filepath)  # Store the file names
+
 
 # Concatenate all batch features into a single NumPy array.
 all_features = np.concatenate(all_features, axis=0)
 all_features = np.squeeze(all_features)  # Remove any singleton dimensions if needed.
 
 # Save the features to a NumPy file.
-np.save(feature_file, all_features)
+np.save(feature_file, {"features": all_features, "filepaths": all_filepaths})
 print(f"Features saved to {feature_file}")

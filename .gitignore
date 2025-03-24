@@ -8,4 +8,5 @@
 .Ds_Store
 .idea/
 /morphem/__pycache__/
+/morphem/*.npy
 

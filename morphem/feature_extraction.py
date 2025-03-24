@@ -43,7 +43,7 @@ class ViTClass():
         remove_prefixes = ["module.backbone.", "module.", "module.head."]
 
         # Load model weights
-        student_model = torch.load("/scr/vidit/Foundation_Models/model_weights/LR_0.0005_GuidedCrop/checkpoint.pth")['student']
+        student_model = torch.load("/scr/vidit/Foundation_Models/model_weights/GuidedALLAugs_DINOv1/checkpoint.pth")['student']
         # Remove unwanted prefixes
         cleaned_state_dict = {}
         for k, v in student_model.items():
