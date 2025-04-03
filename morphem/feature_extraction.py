@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from skimage import io
 import skimage
+from torchvision import transforms
 import importlib
 from tqdm import tqdm
 
@@ -22,12 +23,42 @@ import argparse
 
 import folded_dataset
 # reload(folded_dataset)
+class PerImageNormalize(nn.Module):
+    def __init__(self, eps=1e-7):
+        super().__init__()
+        # We initialize with num_features=1, but we’ll replace it on-the-fly if needed.
+        self.eps = eps
+        self.instance_norm = nn.InstanceNorm2d(
+            num_features=1,             # Temporary placeholder
+            affine=False,               # No learnable parameters
+            track_running_stats=False,  # Use per-forward stats (no running mean)
+            eps=self.eps
+        )
 
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        x shape: (N, C, H, W)
+        We'll ensure that our instance_norm has the correct number of channels (C).
+        """
+        # If your input has a dynamic channel size, we need to re-initialize:
+        C, _, _ = x.shape
+        if self.instance_norm.num_features != C:
+            self.instance_norm = nn.InstanceNorm2d(
+                num_features=C,
+                affine=False,
+                track_running_stats=False,
+                eps=self.eps
+            )
 
-def configure_dataset(root_dir, dataset_name):
+        # Now we can pass x through our InstanceNorm2d layer
+        return self.instance_norm(x)
+    
+
+def configure_dataset(root_dir, dataset_name, transform=None):
     df_path = f'{root_dir}/{dataset_name}/enriched_meta.csv'
     df = pd.read_csv(df_path)
-    dataset = folded_dataset.SingleCellDataset(csv_file=df_path, root_dir=root_dir, target_labels='train_test_split')
+
+    dataset = folded_dataset.SingleCellDataset(csv_file=df_path, root_dir=root_dir, target_labels='train_test_split', transform=transform)
 
     return dataset
 
@@ -43,7 +74,7 @@ class ViTClass():
         remove_prefixes = ["module.backbone.", "module.", "module.head."]
 
         # Load model weights
-        student_model = torch.load("/scr/vidit/Foundation_Models/model_weights/GuidedALLAugs_DINOv1/checkpoint.pth")['student']
+        student_model = torch.load("/scr/vidit/Foundation_Models/model_weights/CHAMMI_Original_SelfNormalize/checkpoint.pth")['student']
         # Remove unwanted prefixes
         cleaned_state_dict = {}
         for k, v in student_model.items():
@@ -142,7 +173,10 @@ def get_save_features(feature_dir, root_dir, model_check, gpu, batch_size):
         
         
     for dataset_name in dataset_names:
-        dataset = configure_dataset(root_dir, dataset_name)
+        # Post crops and processing getting the transforms
+        transform = transforms.Compose([
+            PerImageNormalize()])
+        dataset = configure_dataset(root_dir, dataset_name, transform=transform)
         train_dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
         
         all_feat = []
@@ -168,8 +202,6 @@ def get_save_features(feature_dir, root_dir, model_check, gpu, batch_size):
     
                 output = vit_model.forward_features((single_channel).to(device))
                 feat_temp = output["x_norm_clstoken"].cpu().detach().numpy()
-                
-                    
 
                 batch_feat.append(feat_temp)
                 

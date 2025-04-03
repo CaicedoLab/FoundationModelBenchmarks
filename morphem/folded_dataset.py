@@ -18,6 +18,56 @@ import math
 # Ignore warnings
 import warnings
 warnings.filterwarnings("ignore")
+import os
+import torch
+import skimage.io
+
+import pandas as pd
+import numpy as np
+
+from torch.utils.data import Dataset, DataLoader
+from torchvision import transforms, utils
+import torchvision
+t = torchvision.transforms.ToTensor()
+from collections.abc import Sequence
+from torch import Tensor
+from typing import Tuple, List, Optional
+import math
+
+import random
+from torchvision.transforms import v2
+
+########################################################
+## Scale normalization functions for CHAMMI images
+########################################################
+
+rrc160 = v2.Compose([
+    v2.CenterCrop((92,92)),
+    v2.RandomResizedCrop((256,256), scale=(0.8,0.9), ratio=(0.95,1.05), antialias=True)
+])
+rrc238 = v2.Compose([
+    v2.RandomResizedCrop((256,256), scale=(0.95,1.0), ratio=(0.95,1.05), antialias=True)
+])
+rrc512 = v2.Compose([
+    v2.RandomResizedCrop((256,256), scale=(0.95,1.0), ratio=(0.95,1.05), antialias=True)
+])
+
+def normalize_scale_for_training(im):
+    if im.shape[-2] == 160:
+        t = rrc160(im)
+    elif im.shape[-2] == 238:
+        t = rrc238(im)
+    elif im.shape[-2] == 512:
+        t = rrc512(im)
+    k = random.choice([0, 1, 2, 3])
+    t = torch.rot90(t, k=k, dims=(-2, -1))
+    return t
+
+def normalize_scale_for_test(im):
+    sizes = {160:82, 238:238, 512:512}
+    t = transforms.functional.center_crop(im, sizes[im.shape[-2]])
+    t = transforms.functional.resize(t, (224,224))
+    return t
 
 
 ########################################################
@@ -65,6 +115,21 @@ class SingleCellDataset(Dataset):
     def __len__(self):
         return len(self.metadata)
 
+    def prepare(self, idx, image, label, norm_func, mixup=False):
+        #c = self.metadata.loc[idx, "channel"]
+        #image = image[c,...]
+        #image = image[np.newaxis,...]
+        image = norm_func(image)
+ 
+        if mixup:
+            other_idx = np.random.randint(0, self.metadata.shape[0])
+            other_img, other_label = self.load_image(other_idx)
+            other_img, other_label = self.prepare(other_idx, other_img, other_label, False)
+            alpha = 0.5*np.random.random()
+            image = (1 - alpha)*image + alpha*other_img
+            label = (1 - alpha)*label + alpha*other_label
+        return image, label
+
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
@@ -80,6 +145,8 @@ class SingleCellDataset(Dataset):
             labels = self.metadata.loc[idx, self.target_labels]
         else:
             labels = None
+        
+        image, labels = self.prepare(idx, image, labels, normalize_scale_for_test, False)
 
         if self.transform:
             image = self.transform(image)
