@@ -17,6 +17,7 @@ https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision
 """
 import math
 from functools import partial
+import random
 
 import torch
 import torch.nn as nn
@@ -171,27 +172,51 @@ class VisionTransformer(nn.Module):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
 
+
+
     def interpolate_pos_encoding(self, x, w, h):
         npatch = x.shape[1] - 1
         N = self.pos_embed.shape[1] - 1
         if npatch == N and w == h:
             return self.pos_embed
+
         class_pos_embed = self.pos_embed[:, 0]
         patch_pos_embed = self.pos_embed[:, 1:]
         dim = x.shape[-1]
-        w0 = w // self.patch_embed.patch_size
-        h0 = h // self.patch_embed.patch_size
-        # we add a small number to avoid floating point error in the interpolation
-        # see discussion at https://github.com/facebookresearch/dino/issues/8
-        w0, h0 = w0 + 0.1, h0 + 0.1
-        patch_pos_embed = nn.functional.interpolate(
+
+        upsampled_size = 1024 // self.patch_embed.patch_size
+
+        upsampled_pos_embed = nn.functional.interpolate(
             patch_pos_embed.reshape(1, int(math.sqrt(N)), int(math.sqrt(N)), dim).permute(0, 3, 1, 2),
-            scale_factor=(w0 / math.sqrt(N), h0 / math.sqrt(N)),
+            size=(upsampled_size, upsampled_size),
             mode='bicubic',
         )
-        assert int(w0) == patch_pos_embed.shape[-2] and int(h0) == patch_pos_embed.shape[-1]
+
+        crop_size = 224 // self.patch_embed.patch_size
+
+        # Random crop coordinates
+        max_h = upsampled_size - crop_size
+        max_w = upsampled_size - crop_size
+        start_h = random.randint(0, max_h)
+        start_w = random.randint(0, max_w)
+
+        patch_pos_embed = upsampled_pos_embed[:, :, start_h:start_h+crop_size, start_w:start_w+crop_size]
+
+        w0 = w // self.patch_embed.patch_size + 0.1
+        h0 = h // self.patch_embed.patch_size + 0.1
+
+        patch_pos_embed = nn.functional.interpolate(
+            patch_pos_embed,
+            size=(int(h0), int(w0)),
+            mode='bicubic',
+        )
+
+        assert int(h0) == patch_pos_embed.shape[-2] and int(w0) == patch_pos_embed.shape[-1]
+
         patch_pos_embed = patch_pos_embed.permute(0, 2, 3, 1).view(1, -1, dim)
+
         return torch.cat((class_pos_embed.unsqueeze(0), patch_pos_embed), dim=1)
+
 
     def prepare_tokens(self, x):
         B, nc, w, h = x.shape

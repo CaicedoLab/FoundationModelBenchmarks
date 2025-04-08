@@ -11,13 +11,15 @@ from torchvision import transforms
 import importlib
 from tqdm import tqdm
 
+from torchvision.transforms import v2
 from vision_transformer import vit_small
 from torchvision.models import resnet18, ResNet18_Weights
-from timm import create_model
 import torch.nn.functional as F
 import sys
 
 import argparse
+import torch
+import sys
 
 
 
@@ -52,14 +54,12 @@ class PerImageNormalize(nn.Module):
 
         # Now we can pass x through our InstanceNorm2d layer
         return self.instance_norm(x)
-    
+
 
 def configure_dataset(root_dir, dataset_name, transform=None):
     df_path = f'{root_dir}/{dataset_name}/enriched_meta.csv'
     df = pd.read_csv(df_path)
-
     dataset = folded_dataset.SingleCellDataset(csv_file=df_path, root_dir=root_dir, target_labels='train_test_split', transform=transform)
-
     return dataset
 
 import torch
@@ -74,7 +74,7 @@ class ViTClass():
         remove_prefixes = ["module.backbone.", "module.", "module.head."]
 
         # Load model weights
-        student_model = torch.load("/scr/vidit/Foundation_Models/model_weights/CHAMMI_Original_SelfNormalize/checkpoint.pth")['student']
+        student_model = torch.load("/scr/vidit/Foundation_Models/model_weights/CHAMMIs10d_CPE/checkpoint.pth")['student']
         # Remove unwanted prefixes
         cleaned_state_dict = {}
         for k, v in student_model.items():
@@ -90,48 +90,6 @@ class ViTClass():
 
     def get_model(self):
         return self.model
-
-
-
-
-class ConvNextClass():
-    def __init__(self, gpu):
-        self.device = torch.device(f"cuda:{gpu}" if torch.cuda.is_available() else "cpu")
-       
-        pretrained = True
-        model = create_model("convnext_tiny.fb_in22k", pretrained=pretrained).to(self.device)
-        self.feature_extractor = nn.Sequential(
-                            model.stem,
-                            model.stages[0],
-                            model.stages[1],
-                            model.stages[2].downsample,
-                            *[model.stages[2].blocks[i] for i in range(9)],
-                            model.stages[3].downsample,
-                            *[model.stages[3].blocks[i] for i in range(3)],
-                            
-                            )
-        
-            
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.feature_extractor(x)
-        x = F.adaptive_avg_pool2d(x, (1, 1))
-      
-        return x
-
-
-
-class ResNetClass():
-    def resnet_model(gpu):
-        device = torch.device(f"cuda:{gpu}" if torch.cuda.is_available() else "cpu")
-
-
-        weights = ResNet18_Weights.IMAGENET1K_V1
-        m = resnet18(weights=weights).to(device)
-        feature_extractor = torch.nn.Sequential(*list(m.children())[:-1]).to(device)
-
-
-        return weights, feature_extractor
-
 
 
 def create_pad(images, patch_width, patch_height): # new method for vit model

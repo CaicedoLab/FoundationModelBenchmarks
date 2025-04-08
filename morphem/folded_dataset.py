@@ -64,7 +64,7 @@ def normalize_scale_for_training(im):
     return t
 
 def normalize_scale_for_test(im):
-    sizes = {160:82, 238:238, 512:512}
+    sizes = {160:160, 238:238, 512:512}
     t = transforms.functional.center_crop(im, sizes[im.shape[-2]])
     t = transforms.functional.resize(t, (224,224))
     return t
@@ -146,7 +146,7 @@ class SingleCellDataset(Dataset):
         else:
             labels = None
         
-        image, labels = self.prepare(idx, image, labels, normalize_scale_for_test, False)
+        #image, labels = self.prepare(idx, image, labels, normalize_scale_for_test, False)
 
         if self.transform:
             image = self.transform(image)
