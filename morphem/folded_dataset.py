@@ -146,7 +146,7 @@ class SingleCellDataset(Dataset):
         else:
             labels = None
         
-        #image, labels = self.prepare(idx, image, labels, normalize_scale_for_test, False)
+        image, labels = self.prepare(idx, image, labels, normalize_scale_for_test, False)
 
         if self.transform:
             image = self.transform(image)
