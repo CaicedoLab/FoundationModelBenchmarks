@@ -16,6 +16,7 @@ from vision_transformer import vit_small
 from torchvision.models import resnet18, ResNet18_Weights
 import torch.nn.functional as F
 import sys
+from models_mae import mae_vit_base_patch16
 
 import argparse
 import torch
@@ -147,6 +148,20 @@ class ViTClass():
 
     def get_model(self):
         return self.model
+    
+class MAEModel():
+    def __init__(self, gpu):
+        self.device = f"cuda:{gpu}" if torch.cuda.is_available() else 'cpu'
+        self.model = mae_vit_base_patch16()
+
+        state_dict = torch.load("/scr/vidit/Foundation_Models/model_weights/MAE_CHAMMI_Train/checkpoint-399.pth", map_location=self.device)
+        self.model.load_state_dict(state_dict['model'], strict=False)
+        self.model.eval()
+        self.model.to(self.device)
+
+    def get_model(self):
+        return self.model
+
 
 
 def create_pad(images, patch_width, patch_height): # new method for vit model
@@ -180,11 +195,15 @@ def create_pad(images, patch_width, patch_height): # new method for vit model
 def get_save_features(feature_dir, root_dir, model_check, gpu, batch_size):
     dataset_names = ['Allen', 'CP', 'HPA']
     device = torch.device(f"cuda:{gpu}" if torch.cuda.is_available() else "cpu")
-    
 
-    vit_instance = ViTClass(gpu) 
-    vit_model = vit_instance.get_model() 
-    feature_file = 'pretrained_vit_features.npy'
+    if model_check == "mae":
+        mae_instance = MAEModel(gpu) 
+        mae_model = mae_instance.get_model() 
+        feature_file = 'pretrained_mae_features.npy'
+    else:
+        vit_instance = ViTClass(gpu) 
+        vit_model = vit_instance.get_model() 
+        feature_file = 'pretrained_vit_features.npy'
         
  
     for dataset_name in dataset_names:
@@ -208,6 +227,16 @@ def get_save_features(feature_dir, root_dir, model_check, gpu, batch_size):
                 patch_size = conv_layer.kernel_size
                 patch_height, patch_width = patch_size
                 images = create_pad(images, patch_width, patch_height)
+            elif model_check == "mae":
+                patch_embed = mae_model.patch_embed
+
+                # Access the Conv2d layer within PatchEmbed
+                conv_layer = patch_embed.proj
+                
+                # Extract kernel size (patch size)
+                patch_size = conv_layer.kernel_size
+                patch_height, patch_width = patch_size
+                images = create_pad(images, patch_width, patch_height)
 
             
             cloned_images = images.clone()
@@ -215,9 +244,12 @@ def get_save_features(feature_dir, root_dir, model_check, gpu, batch_size):
             for c in range(cloned_images.shape[1]):
                 # Copy each channel three times
                 single_channel = images[:, c, :, :].unsqueeze(1).to(device)
-    
-                output = vit_model.forward_features((single_channel).to(device))
-                feat_temp = output["x_norm_clstoken"].cpu().detach().numpy()
+
+                if model_check == "vit":
+                    output = vit_model.forward_features((single_channel).to(device))
+                    feat_temp = output["x_norm_clstoken"].cpu().detach().numpy()
+                elif model_check == "mae":
+                    feat_temp = mae_model.get_features((single_channel).to(device)).cpu().detach().numpy()
 
                 batch_feat.append(feat_temp)
                 
@@ -245,7 +277,7 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root_dir", type=str, help="The root directory of the original images", required=True)
     parser.add_argument("--feat_dir", type=str, help="The directory that contains the features", required=True)
-    parser.add_argument("--model", type=str, help="The type of model that is being trained and evaluated (convnext, resnet, or vit)", required=True, choices=['convnext', 'resnet', 'vit'])
+    parser.add_argument("--model", type=str, help="The type of model that is being trained and evaluated (convnext, resnet, or vit)", required=True, choices=['mae', 'resnet', 'vit'])
     parser.add_argument("--gpu", type=int, help="The gpu that is currently available/not in use", required=True)
     parser.add_argument("--batch_size", type=int, default=64, help="Select a batch size that works for your gpu size", required=True)
     
