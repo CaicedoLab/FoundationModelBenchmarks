@@ -26,6 +26,9 @@ from torch.utils.data import DataLoader
 from torchvision.transforms import v2
 from torchvision import datasets, transforms
 
+'''
+Script to extract features from the 75 datasets after training the model.
+'''
 
 transform = v2.Compose([
     v2.CenterCrop(224),
