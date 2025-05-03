@@ -19,7 +19,7 @@ from torchvision import transforms
 from torch import nn
 
 def load_meta_data(base_path: str):
-    PLATE_TO_ID = {"BR00116991": 0, "BR00116993": 1, "BR00117000": 2}
+    PLATE_TO_ID = {"BR00116991": 0}
     FIELD_TO_ID = dict(zip([str(i) for i in range(1, 10)], range(9)))
     WELL_TO_ID = {}
     for i in range(16):
@@ -334,66 +334,3 @@ def get_jumpcp_dataloaders(
     )
     return train_loader, val_loader, test_loader
 
-
-if __name__ == "__main__":
-    ## Usage example
-    root_dir = "/scr/data"  ## change this to your local path
-    image_size = (224, 224)
-    batch_size = 32
-    eval_batch_size = 32
-    num_workers = 4
-    use_hdf5 = False  # set to True if using a single hdf5 file for all images
-    channels = {
-        "training": [0, 1, 2, 3, 4, 5, 6, 7],
-        "validation": [0, 1, 2, 3, 4, 5, 6, 7],
-        "test": [0, 1, 2, 3, 4, 5, 6, 7],
-    }
-    normalization = {
-        "mean": [
-            0.01581075921231003,
-            0.006140922498382506,
-            0.014798741106504431,
-            0.013570686834169905,
-            0.016362028432960873,
-            0.026590312836544904,
-            0.026617198824059368,
-            0.026580865997500865,
-        ],
-        "std": [
-            0.06791544660570861,
-            0.0471212480637794,
-            0.06653356109197056,
-            0.05907755398543979,
-            0.07044752235635533,
-            0.08485790724206006,
-            0.08498261058688023,
-            0.08486073954939445,
-        ],
-    }
-
-    train_loader, val_loader, test_loader = get_jumpcp_dataloaders(
-        root_dir, image_size, batch_size, eval_batch_size, num_workers, channels, normalization, use_hdf5
-    )
-
-    print(f"Train set size: {len(train_loader.dataset)}")
-    for i, batch in enumerate(train_loader):
-        print(batch["image"].shape)
-        print(batch["label"])
-        if i > 2:
-            break
-
-    print(f"Validation set size: {len(val_loader.dataset)}")
-    for i, batch in enumerate(val_loader):
-        print(batch["image"].shape)
-        print(batch["label"])
-        if i > 2:
-            break
-
-    print(f"Test set size: {len(test_loader.dataset)}")
-    for i, batch in enumerate(test_loader):
-        print(batch["image"].shape)
-        print(batch["label"])
-        if i > 2:
-            break
-
-    print("Done")

@@ -12,7 +12,7 @@ import importlib
 from tqdm import tqdm
 
 from torchvision.transforms import v2
-from vision_transformer import vit_small
+from vision_transformer import vit_small, vit_base
 from torchvision.models import resnet18, ResNet18_Weights
 import torch.nn.functional as F
 import sys
@@ -70,11 +70,11 @@ class ViTClass():
         self.device = f"cuda:{gpu}" if torch.cuda.is_available() else 'cpu'
 
         # Create model with in_chans=1 to match training setup
-        self.model = vit_small()
+        self.model = vit_base()
         remove_prefixes = ["module.backbone.", "module.", "module.head."]
 
         # Load model weights
-        student_model = torch.load("/scr/vidit/Foundation_Models/model_weights/small_mae_10ds_multiscale/checkpoint.pth")['student']
+        student_model = torch.load("/scr/vidit/Foundation_Models/model_weights/DINO_base_10ds_multiscale/checkpoint.pth")['student']
         # Remove unwanted prefixes
         cleaned_state_dict = {}
         for k, v in student_model.items():
