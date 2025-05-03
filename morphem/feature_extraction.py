@@ -12,11 +12,11 @@ import importlib
 from tqdm import tqdm
 
 from torchvision.transforms import v2
-from vision_transformer import vit_small
+from vision_transformer import vit_small, vit_base
 from torchvision.models import resnet18, ResNet18_Weights
 import torch.nn.functional as F
 import sys
-from models_mae import mae_vit_base_patch16
+from models_mae import mae_vit_base_patch16, mae_vit_small_patch16
 
 import argparse
 import torch
@@ -128,11 +128,11 @@ class ViTClass():
         self.device = f"cuda:{gpu}" if torch.cuda.is_available() else 'cpu'
 
         # Create model with in_chans=1 to match training setup
-        self.model = vit_small()
+        self.model = vit_base()
         remove_prefixes = ["module.backbone.", "module.", "module.head."]
 
         # Load model weights
-        student_model = torch.load("/scr/vidit/Foundation_Models/model_weights/CHAMMIv1_Duplicate-CP/checkpoint.pth")['student']
+        student_model = torch.load("/scr/vidit/Foundation_Models/model_weights/Dino_Base_10ds_guided/checkpoint.pth")['student']
         # Remove unwanted prefixes
         cleaned_state_dict = {}
         for k, v in student_model.items():
@@ -152,9 +152,9 @@ class ViTClass():
 class MAEModel():
     def __init__(self, gpu):
         self.device = f"cuda:{gpu}" if torch.cuda.is_available() else 'cpu'
-        self.model = mae_vit_base_patch16()
+        self.model = mae_vit_small_patch16()
 
-        state_dict = torch.load("/scr/vidit/Foundation_Models/model_weights/MAE_CHAMMI_Train/checkpoint-399.pth", map_location=self.device)
+        state_dict = torch.load("/scr/vidit/Foundation_Models/model_weights/small_mae_10ds_guided/checkpoint-399.pth", map_location=self.device)
         self.model.load_state_dict(state_dict['model'], strict=False)
         self.model.eval()
         self.model.to(self.device)
