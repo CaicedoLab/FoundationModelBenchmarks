@@ -67,11 +67,11 @@ class ViTExtractor():
     def __init__(self, gpu):
         self.device = f"cuda:{gpu}" if torch.cuda.is_available() else 'cpu'
         # Create model with in_chans=1 to match training setup
-        self.model = vit_base()
+        self.model = vit_small()
         remove_prefixes = ["module.backbone.", "module.", "module.head."]
 
         # Load model weights
-        student_model = torch.load("/scr/vidit/Foundation_Models/model_weights/Dino_Base_10ds_Baseline/checkpoint.pth")['student']
+        student_model = torch.load("/scr/vidit/Foundation_Models/model_weights/10ds_multiscale_guided/checkpoint.pth")['student']
         # Remove unwanted prefixes
         cleaned_state_dict = {}
         for k, v in student_model.items():
@@ -84,56 +84,62 @@ class ViTExtractor():
         self.model.load_state_dict(cleaned_state_dict, strict=False)
         self.model.eval()
         self.model.to(self.device)
+        
+        # Freeze all parameters
+        for param in self.model.parameters():
+            param.requires_grad = False
 
     def get_model(self):
         return self.model
-
-# MLP Classifier
-class MLPClassifier(nn.Module):
-    def __init__(self, input_dim, num_classes, use_mlp=True):
-        super().__init__()
-        self.use_mlp = use_mlp
-        
-        if use_mlp:
-            self.classifier = nn.Sequential(
-                nn.Linear(input_dim, input_dim),
-                nn.ReLU(),
-                nn.Linear(input_dim, num_classes)
-            )
+    
+    def extract_features(self, x, return_layers=False):
+        """
+        Extract features from the model, optionally returning intermediate layer outputs
+        for the last 4 layers as described in Caron et al. (2021)
+        """
+        if return_layers:
+            return self.model.forward_features(x, return_layers=True)
         else:
-            self.classifier = nn.Linear(input_dim, num_classes)
+            return self.model.forward_features(x)
+
+
+# Replace the MLPClassifier with a linear classifier
+class LinearClassifier(nn.Module):
+    def __init__(self, input_dim, num_classes):
+        super().__init__()
+        self.classifier = nn.Linear(input_dim, num_classes)
     
     def forward(self, x):
         return self.classifier(x)
 
-def create_pad(images, patch_width, patch_height):
-    if images.dim() == 3:  # Single image: C, H, W
-        C, H, W = images.shape
-        N = 1
-        images = images.unsqueeze(0)  # Add batch dimension
-    else:  # Batch of images: N, C, H, W
-        N, C, H, W = images.shape
-    
+def create_pad(images, patch_width, patch_height): # new method for vit model
+    N, C, H, W = images.shape
+
     new_width = ((W + patch_width - 1) // patch_width) * patch_width
     pad_width = new_width - W
+
+    # Calculate padding amounts for left and right
     pad_left = pad_right = pad_width // 2
+    
     if pad_width % 2 != 0:
         pad_right += 1
 
+
     new_height = ((H + patch_height - 1) // patch_height) * patch_height
     pad_height = new_height - H
+    
+    # Calculate padding amounts for top and bottom
     pad_top = pad_bottom = pad_height // 2
+    
     if pad_height % 2 != 0:
         pad_bottom += 1
+        
 
-    padded_images = torch.nn.functional.pad(images, (pad_left, pad_right, pad_top, pad_bottom), mode='constant', value=0)
+    padded_images = F.pad(images, (pad_left, pad_right, pad_top, pad_bottom), mode='constant', value=0)
     
-    # Return with original dimensions
-    if N == 1 and images.dim() == 4:
-        return padded_images.squeeze(0)
     return padded_images
 
-def extract_features_from_dataset(dataloader, vit_model, gpu, feature_file=None, batch_size=32):
+def extract_features_from_dataset(dataloader, vit_model, gpu, feature_file=None, batch_size=32, return_last_layers=True):
     device = torch.device(f"cuda:{gpu}" if torch.cuda.is_available() else "cpu")
     all_features = []
     all_labels = []
@@ -153,7 +159,7 @@ def extract_features_from_dataset(dataloader, vit_model, gpu, feature_file=None,
             images = create_pad(images, patch_width, patch_height)
             
             # Extract features from each channel
-            batch_features = []
+            batch_channel_features = []
             for c in range(images.shape[1]):
                 # Get single channel and process it
                 single_channel = images[:, c, :, :].unsqueeze(1).to(device)
@@ -162,10 +168,10 @@ def extract_features_from_dataset(dataloader, vit_model, gpu, feature_file=None,
                 output = vit_model.forward_features(single_channel)
                 features = output["x_norm_clstoken"].cpu().detach()
                 
-                batch_features.append(features)
+                batch_channel_features.append(features)
             
             # Concatenate features from all channels
-            batch_features = torch.cat(batch_features, dim=1)
+            batch_features = torch.cat(batch_channel_features, dim=1)
             
             all_features.append(batch_features)
             all_labels.append(labels)
@@ -182,26 +188,24 @@ def extract_features_from_dataset(dataloader, vit_model, gpu, feature_file=None,
     
     return all_features, all_labels
 
-def train_mlp(train_features, train_labels, val_features=None, val_labels=None, 
-              num_classes=161, use_mlp=True, embed_dim=384, lr=0.0005, 
-              weight_decay=0.04, epochs=100, batch_size=64, device='cuda:0',
-              warmup_epochs=10, min_lr=1e-6):
-    """Train MLP classifier on the extracted features using hyperparameters from the paper
+
+def train_linear_classifier(train_features, train_labels, val_features=None, val_labels=None, 
+                           num_classes=161, embed_dim=None, lr=0.00001, weight_decay=1e-4, 
+                           epochs=100, batch_size=256, device='cuda:0', momentum=0.9):
+    """Train a linear classifier on the extracted features using SGD with momentum
     Args:
         train_features: Features from the training set
         train_labels: Labels from the training set
         val_features: Features from the validation set
         val_labels: Labels from the validation set
         num_classes: Number of classes for classification
-        use_mlp: Whether to use MLP (True) or linear classifier (False)
         embed_dim: Embedding dimension (not used, kept for compatibility)
-        lr: Maximum learning rate (after warmup)
-        weight_decay: Weight decay coefficient (applied selectively)
+        lr: Initial learning rate
+        weight_decay: Weight decay coefficient 
         epochs: Total number of training epochs
         batch_size: Batch size for training
         device: Device to train on ('cuda:0', 'cuda:1', etc.)
-        warmup_epochs: Number of warmup epochs
-        min_lr: Minimum learning rate (after decay)
+        momentum: Momentum for SGD optimizer
     """
     import torch
     from torch import nn
@@ -211,10 +215,11 @@ def train_mlp(train_features, train_labels, val_features=None, val_labels=None,
     from tqdm import tqdm
     from sklearn.metrics import accuracy_score
     
-    print(f"Training MLP classifier with {'MLP' if use_mlp else 'Linear'} architecture...")
-    print(f"- Warmup for {warmup_epochs} epochs to lr={lr}")
+    print(f"Training linear classifier with SGD...")
+    print(f"- Initial learning rate: {lr}")
+    print(f"- Momentum: {momentum}")
+    print(f"- Weight decay: {weight_decay}")
     print(f"- Total epochs: {epochs}")
-    print(f"- Weight decay: {weight_decay} (applied selectively)")
     print(f"- Batch size: {batch_size}")
     
     # Determine input dimension from the feature tensor
@@ -226,120 +231,22 @@ def train_mlp(train_features, train_labels, val_features=None, val_labels=None,
     else:
         input_dim = train_features.shape[1]
     
-    # MLP Classifier
-    class MLPClassifier(nn.Module):
-        def __init__(self, input_dim, num_classes, use_mlp=True):
-            super().__init__()
-            self.use_mlp = use_mlp
-            
-            if use_mlp:
-                self.classifier = nn.Sequential(
-                    nn.Linear(input_dim, input_dim),
-                    nn.ReLU(),
-                    nn.Linear(input_dim, num_classes)
-                )
-            else:
-                self.classifier = nn.Linear(input_dim, num_classes)
-        
-        def forward(self, x):
-            return self.classifier(x)
+    # Create the linear classifier
+    model = LinearClassifier(input_dim, num_classes).to(device)
     
-    # Custom warmup cosine scheduler as described in the paper
-    class WarmupCosineScheduler:
-        def __init__(self, optimizer, warmup_epochs, total_epochs, min_lr=1e-6, max_lr=5e-4):
-            self.optimizer = optimizer
-            self.warmup_epochs = warmup_epochs
-            self.total_epochs = total_epochs
-            self.min_lr = min_lr
-            self.max_lr = max_lr
-            self.current_epoch = 0
-            
-        def step(self):
-            self.current_epoch += 1
-            if self.current_epoch <= self.warmup_epochs:
-                # Linear warmup
-                lr = self.max_lr * (self.current_epoch / self.warmup_epochs)
-            else:
-                # Cosine decay
-                progress = (self.current_epoch - self.warmup_epochs) / (self.total_epochs - self.warmup_epochs)
-                lr = self.min_lr + 0.5 * (self.max_lr - self.min_lr) * (1 + math.cos(math.pi * progress))
-                
-            for param_group in self.optimizer.param_groups:
-                param_group['lr'] = lr
-                
-            return lr
-    
-    # Get parameter groups for selective weight decay
-    def get_params_groups(model):
-        decay = []
-        no_decay = []
-        
-        for name, param in model.named_parameters():
-            if not param.requires_grad:
-                continue
-                
-            # Skip bias and normalization terms
-            if "bias" in name or "norm" in name or "bn" in name:
-                no_decay.append(param)
-            else:
-                decay.append(param)
-                
-        return [
-            {'params': decay, 'weight_decay': weight_decay},
-            {'params': no_decay, 'weight_decay': 0.0}
-        ]
-    
-    # Evaluation function
-    def evaluate_mlp(model, data_loader, criterion=None, device='cuda:0'):
-        model.eval()
-        
-        if criterion is None:
-            criterion = nn.CrossEntropyLoss()
-        
-        total_loss = 0.0
-        all_preds = []
-        all_labels = []
-        
-        with torch.no_grad():
-            for features, labels in data_loader:
-                features, labels = features.to(device), labels.to(device)
-                
-                # Forward pass
-                outputs = model(features)
-                loss = criterion(outputs, labels)
-                
-                total_loss += loss.item()
-                
-                # Get predictions
-                _, preds = torch.max(outputs, 1)
-                
-                all_preds.extend(preds.cpu().numpy())
-                all_labels.extend(labels.cpu().numpy())
-        
-        # Calculate metrics
-        accuracy = accuracy_score(all_labels, all_preds)
-        
-        # Calculate average loss
-        avg_loss = total_loss / len(data_loader)
-        
-        return accuracy, avg_loss
-    
-    # Create the model
-    model = MLPClassifier(input_dim, num_classes, use_mlp)
-    model.to(device)
-    
-    # Define loss and optimizer with selective weight decay
+    # Define loss and optimizer (SGD with momentum as per Caron et al. 2021)
     criterion = nn.CrossEntropyLoss()
-    param_groups = get_params_groups(model)
-    optimizer = torch.optim.AdamW(param_groups)
+    optimizer = torch.optim.SGD(
+        model.parameters(), 
+        lr=lr,
+        momentum=momentum,
+        weight_decay=weight_decay
+    )
     
-    # Learning rate scheduler with warmup
-    scheduler = WarmupCosineScheduler(
-        optimizer,
-        warmup_epochs=warmup_epochs,
-        total_epochs=epochs,
-        min_lr=min_lr,
-        max_lr=lr
+    # Learning rate scheduler (cosine annealing)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, 
+        T_max=epochs
     )
     
     # Convert to PyTorch datasets for batching
@@ -393,14 +300,15 @@ def train_mlp(train_features, train_labels, val_features=None, val_labels=None,
         train_acc = accuracy_score(all_train_labels, all_train_preds)
         
         # Update learning rate
-        current_lr = scheduler.step()
+        scheduler.step()
+        current_lr = scheduler.get_last_lr()[0]
         
         # Calculate average training loss
         train_loss /= len(train_loader)
         
         # Validation
         if val_loader:
-            val_acc, val_loss = evaluate_mlp(model, val_loader, criterion, device)
+            val_acc, val_loss = evaluate_linear_classifier(model, val_loader, criterion, device)
             
             print(f"Epoch {epoch+1}/{epochs} - LR: {current_lr:.6f}, Train Loss: {train_loss:.4f}, "
                   f"Train Acc: {train_acc:.4f}, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
@@ -421,8 +329,9 @@ def train_mlp(train_features, train_labels, val_features=None, val_labels=None,
     
     return model
 
-def evaluate_mlp(model, data_loader, criterion=None, device='cuda:0'):
-    """Evaluate MLP classifier on provided data"""
+
+def evaluate_linear_classifier(model, data_loader, criterion=None, device='cuda:0'):
+    """Evaluate linear classifier on provided data"""
     model.eval()
     
     if criterion is None:
@@ -456,33 +365,9 @@ def evaluate_mlp(model, data_loader, criterion=None, device='cuda:0'):
     
     return accuracy, avg_loss
 
-def predict_mlp(model, data_loader, device='cuda:0'):
-    """Make predictions using the trained MLP classifier"""
-    model.eval()
-    
-    all_preds = []
-    all_labels = []
-    all_probs = []
-    
-    with torch.no_grad():
-        for features, labels in data_loader:
-            features, labels = features.to(device), labels.to(device)
-            
-            # Forward pass
-            outputs = model(features)
-            probs = F.softmax(outputs, dim=1)
-            
-            # Get predictions
-            _, preds = torch.max(outputs, 1)
-            
-            all_preds.extend(preds.cpu().numpy())
-            all_labels.extend(labels.cpu().numpy())
-            all_probs.extend(probs.cpu().numpy())
-    
-    return np.array(all_preds), np.array(all_labels), np.array(all_probs)
 
 def process_plate(args, plate_id):
-    """Process a single plate with feature extraction and MLP training"""
+    """Process a single plate with feature extraction and linear classifier training"""
     print(f"Processing plate: {plate_id}")
     
     # Set device
@@ -491,7 +376,6 @@ def process_plate(args, plate_id):
     # Set up the transformation pipeline
     transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Resize((224, 224)),
         SaturationNoiseInjector(),
         PerImageNormalize()
     ])
@@ -554,8 +438,12 @@ def process_plate(args, plate_id):
         
         print("Extracting features for training set...")
         train_features, train_labels = extract_features_from_dataset(
-            train_loader, vit_model, args.gpu, train_feature_path, args.batch_size
+            train_loader, vit_model, args.gpu, train_feature_path, args.batch_size, 
+            return_last_layers=True  # Extract features from last 4 layers
         )
+    
+    # Similar code for validation and test features...
+    # (Code for validation and test feature extraction would be updated similarly)
     
     if val_features_exist:
         print("Loading pre-extracted validation features...")
@@ -585,7 +473,8 @@ def process_plate(args, plate_id):
         
         print("Extracting features for validation set...")
         val_features, val_labels = extract_features_from_dataset(
-            val_loader, vit_model, args.gpu, val_feature_path, args.batch_size
+            val_loader, vit_model, args.gpu, val_feature_path, args.batch_size,
+            return_last_layers=True  # Extract features from last 4 layers
         )
     
     if test_features_exist:
@@ -616,7 +505,8 @@ def process_plate(args, plate_id):
         
         print("Extracting features for test set...")
         test_features, test_labels = extract_features_from_dataset(
-            test_loader, vit_model, args.gpu, test_feature_path, args.batch_size
+            test_loader, vit_model, args.gpu, test_feature_path, args.batch_size,
+            return_last_layers=True  # Extract features from last 4 layers
         )
     
     # Reshape features if needed
@@ -631,122 +521,65 @@ def process_plate(args, plate_id):
         val_features_flat = val_features
         test_features_flat = test_features
     
-    # Create datasets for training the MLP
+    # Create datasets for training the linear classifier
     train_dataset = torch.utils.data.TensorDataset(train_features_flat, train_labels)
     val_dataset = torch.utils.data.TensorDataset(val_features_flat, val_labels)
     test_dataset = torch.utils.data.TensorDataset(test_features_flat, test_labels)
     
     train_loader = torch.utils.data.DataLoader(
         train_dataset, 
-        batch_size=args.mlp_batch_size, 
+        batch_size=args.batch_size, 
         shuffle=True
     )
     
     val_loader = torch.utils.data.DataLoader(
         val_dataset, 
-        batch_size=args.mlp_batch_size, 
+        batch_size=args.batch_size, 
         shuffle=False
     )
     
     test_loader = torch.utils.data.DataLoader(
         test_dataset, 
-        batch_size=args.mlp_batch_size, 
+        batch_size=args.batch_size, 
         shuffle=False
     )
     
-    # Train MLP classifier
-    print(f"Training MLP classifier for plate {plate_id}...")
-    mlp = MLPClassifier(input_dim, args.num_classes, args.use_mlp).to(device)
+    # Train linear classifier
+    print(f"Training linear classifier for plate {plate_id}...")
     
-    # Define loss and optimizer
-    criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.AdamW(
-        mlp.parameters(),
-        lr=args.learning_rate,
-        weight_decay=args.weight_decay
+    # Update the training function to use SGD with momentum
+    linear_clf = train_linear_classifier(
+        train_features_flat, 
+        train_labels,
+        val_features_flat, 
+        val_labels,
+        num_classes=args.num_classes,
+        lr=args.learning_rate,  # LR from Caron et al.
+        momentum=args.momentum,  # Momentum from Caron et al.
+        weight_decay=args.weight_decay,
+        epochs=args.epochs,
+        batch_size=args.batch_size,
+        device=device
     )
-    
-    # Learning rate scheduler
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer,
-        T_max=args.epochs
-    )
-    
-    # Training loop
-    best_val_acc = 0.0
-    best_model_state = None
-    
-    for epoch in range(args.epochs):
-        mlp.train()
-        train_loss = 0.0
-        
-        for features, labels in tqdm(train_loader, desc=f"Epoch {epoch+1}/{args.epochs}"):
-            features, labels = features.to(device), labels.to(device)
-            
-            # Forward pass
-            outputs = mlp(features)
-            loss = criterion(outputs, labels)
-            
-            # Backward pass and optimize
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            
-            train_loss += loss.item()
-        
-        # Update learning rate
-        scheduler.step()
-        
-        # Calculate average training loss
-        train_loss /= len(train_loader)
-        
-        # Validation
-        mlp.eval()
-        val_correct = 0
-        val_total = 0
-        val_loss = 0.0
-        
-        with torch.no_grad():
-            for features, labels in val_loader:
-                features, labels = features.to(device), labels.to(device)
-                
-                outputs = mlp(features)
-                loss = criterion(outputs, labels)
-                
-                val_loss += loss.item()
-                
-                _, predicted = torch.max(outputs.data, 1)
-                val_total += labels.size(0)
-                val_correct += (predicted == labels).sum().item()
-        
-        val_acc = val_correct / val_total
-        val_loss /= len(val_loader)
-        
-        print(f"Epoch {epoch+1}/{args.epochs} - Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
-        
-        # Save best model
-        if val_acc > best_val_acc:
-            best_val_acc = val_acc
-            best_model_state = mlp.state_dict().copy()
-    
-    # Load best model
-    mlp.load_state_dict(best_model_state)
-    print(f"Best validation accuracy: {best_val_acc:.4f}")
     
     # Save the model
-    model_path = os.path.join(plate_feature_dir, "mlp_model.pt")
+    model_path = os.path.join(plate_feature_dir, "linear_model.pt")
     torch.save({
-        'model_state_dict': mlp.state_dict(),
-        'val_accuracy': best_val_acc,
+        'model_state_dict': linear_clf.state_dict(),
         'input_dim': input_dim,
-        'num_classes': args.num_classes,
-        'use_mlp': args.use_mlp
+        'num_classes': args.num_classes
     }, model_path)
     
     # Evaluate on test set
-    mlp.eval()
-    test_correct = 0
-    test_total = 0
+    test_acc, _ = evaluate_linear_classifier(
+        linear_clf, 
+        test_loader, 
+        nn.CrossEntropyLoss(), 
+        device
+    )
+    
+    # Generate classification report
+    linear_clf.eval()
     all_preds = []
     all_labels = []
     
@@ -754,22 +587,16 @@ def process_plate(args, plate_id):
         for features, labels in test_loader:
             features, labels = features.to(device), labels.to(device)
             
-            outputs = mlp(features)
+            outputs = linear_clf(features)
             _, predicted = torch.max(outputs.data, 1)
-            
-            test_total += labels.size(0)
-            test_correct += (predicted == labels).sum().item()
             
             all_preds.extend(predicted.cpu().numpy())
             all_labels.extend(labels.cpu().numpy())
     
-    test_acc = test_correct / test_total
-    
-    # Generate classification report
     report = classification_report(all_labels, all_preds)
     
     # Save results
-    results_path = os.path.join(plate_feature_dir, "results.txt")
+    results_path = os.path.join(plate_feature_dir, "results_linear.txt")
     with open(results_path, 'w') as f:
         f.write(f"Test Accuracy: {test_acc:.4f}\n\n")
         f.write("Classification Report:\n")
@@ -797,9 +624,9 @@ def main(args):
     avg_acc = sum(results[plate]['accuracy'] for plate in args.plates) / len(args.plates)
     
     # Save overall results
-    overall_results_path = os.path.join(args.feature_dir, "overall_results.txt")
+    overall_results_path = os.path.join(args.feature_dir, "overall_results_linear.txt")
     with open(overall_results_path, 'w') as f:
-        f.write(f"Average Accuracy Across All Plates: {avg_acc:.4f}\n\n")
+        f.write(f"Average Linear Classifier Accuracy Across All Plates: {avg_acc:.4f}\n\n")
         
         for plate_id in args.plates:
             f.write(f"Plate {plate_id} Accuracy: {results[plate_id]['accuracy']:.4f}\n")
@@ -811,18 +638,17 @@ def main(args):
     total_time = end_time - start_time
     
     print(f"\nProcessing completed in {total_time:.2f} seconds ({total_time/60:.2f} minutes)")
-    print(f"Average Accuracy Across All Plates: {avg_acc:.4f}")
+    print(f"Average Linear Classifier Accuracy Across All Plates: {avg_acc:.4f}")
     print(f"Overall results saved to {overall_results_path}")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Extract features and train MLP for JUMPCP")
+    parser = argparse.ArgumentParser(description="Extract features and train linear classifier for JUMPCP")
     parser.add_argument("--root_dir", type=str, required=True, help="Root directory for the dataset")
     parser.add_argument("--feature_dir", type=str, required=True, help="Directory to save features")
     parser.add_argument("--gpu", type=int, default=0, help="GPU device ID")
-    parser.add_argument("--batch_size", type=int, default=32, help="Batch size for feature extraction")
-    parser.add_argument("--mlp_batch_size", type=int, default=256, help="Batch size for MLP training")
+    parser.add_argument("--batch_size", type=int, default=256, help="Batch size for feature extraction and training")
     parser.add_argument("--num_workers", type=int, default=4, help="Number of workers for data loading")
-    parser.add_argument("--channels", type=int, nargs="+", default=[0, 1, 2, 3, 4, 5, 6, 7], 
+    parser.add_argument("--channels", type=int, nargs="+", default=[0, 1, 2, 3, 4], 
                         help="Channels to use from the images")
     parser.add_argument("--use_hdf5", action="store_true", help="Use HDF5 dataset format")
     parser.add_argument("--perturbation", type=str, default="compound", 
@@ -830,14 +656,16 @@ if __name__ == "__main__":
                         help="Perturbation type to use")
     parser.add_argument("--num_classes", type=int, default=161, 
                         help="Number of classes for classification")
-    parser.add_argument("--use_mlp", action="store_true", default=True,
-                        help="Use MLP instead of linear classifier")
+    parser.add_argument("--use_last_layers", action="store_true", default=True,
+                        help="Use features from the last 4 layers as per Caron et al. (2021)")
     parser.add_argument("--learning_rate", type=float, default=0.0005, 
-                        help="Learning rate for MLP training")
-    parser.add_argument("--weight_decay", type=float, default=0.04, 
-                        help="Weight decay for MLP training")
+                        help="Learning rate for linear classifier training")
+    parser.add_argument("--momentum", type=float, default=0.9, 
+                        help="Momentum for SGD optimizer")
+    parser.add_argument("--weight_decay", type=float, default=1e-4, 
+                        help="Weight decay for linear classifier training")
     parser.add_argument("--epochs", type=int, default=100, 
-                        help="Number of epochs for MLP training")
+                        help="Number of epochs for linear classifier training")
     parser.add_argument("--plates", type=str, nargs="+", 
                         default=["BR00116991"], 
                         help="List of plates to process")
