@@ -1,0 +1,10 @@
+100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████| 4069/4069 [04:24<00:00, 15.36it/s]
+Traceback (most recent call last):
+  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/feature_extraction.py", line 397, in <module>
+    get_save_features(
+  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/feature_extraction.py", line 320, in get_save_features
+    np.save(feature_path, all_feat)
+  File "/home/MORGRIDGE/jpeters/miniconda3/envs/weakly-supervised/lib/python3.11/site-packages/numpy/lib/npyio.py", line 542, in save
+    file_ctx = open(file, "wb")
+               ^^^^^^^^^^^^^^^^
+IsADirectoryError: [Errno 21] Is a directory: '/scr/jpeters/chammi_eval/vit_s_default_params/Allen/pretrained_dinov2_vit_features.npy'

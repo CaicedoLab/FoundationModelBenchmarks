@@ -2,11 +2,12 @@ import pandas as pd
 import numpy as np
 import os 
 
+
 import umap 
 import matplotlib.pyplot as plt
 import seaborn as sb
 
-import morphem.utils as utils
+import utils as utils
 
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import f1_score, classification_report

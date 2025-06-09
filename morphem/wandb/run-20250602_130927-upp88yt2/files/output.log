@@ -1,0 +1,21 @@
+Traceback (most recent call last):
+  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/feature_extraction.py", line 385, in <module>
+    get_save_features(
+  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/feature_extraction.py", line 237, in get_save_features
+    model.cuda()
+  File "/home/MORGRIDGE/jpeters/miniconda3/envs/weakly-supervised/lib/python3.11/site-packages/torch/nn/modules/module.py", line 905, in cuda
+    return self._apply(lambda t: t.cuda(device))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/MORGRIDGE/jpeters/miniconda3/envs/weakly-supervised/lib/python3.11/site-packages/torch/nn/modules/module.py", line 797, in _apply
+    module._apply(fn)
+  File "/home/MORGRIDGE/jpeters/miniconda3/envs/weakly-supervised/lib/python3.11/site-packages/torch/nn/modules/module.py", line 797, in _apply
+    module._apply(fn)
+  File "/home/MORGRIDGE/jpeters/miniconda3/envs/weakly-supervised/lib/python3.11/site-packages/torch/nn/modules/module.py", line 820, in _apply
+    param_applied = fn(param)
+                    ^^^^^^^^^
+  File "/home/MORGRIDGE/jpeters/miniconda3/envs/weakly-supervised/lib/python3.11/site-packages/torch/nn/modules/module.py", line 905, in <lambda>
+    return self._apply(lambda t: t.cuda(device))
+                                 ^^^^^^^^^^^^^^
+  File "/home/MORGRIDGE/jpeters/miniconda3/envs/weakly-supervised/lib/python3.11/site-packages/torch/cuda/__init__.py", line 239, in _lazy_init
+    raise AssertionError("Torch not compiled with CUDA enabled")
+AssertionError: Torch not compiled with CUDA enabled

@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/feature_extraction.py", line 369, in <module>
+    get_save_features(
+  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/feature_extraction.py", line 221, in get_save_features
+    vit_instance = ViTClass(model_weights, model_size, gpu)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/feature_extraction.py", line 130, in __init__
+    raise ValueError(
+ValueError: Models of base and small are supported, not dinov2

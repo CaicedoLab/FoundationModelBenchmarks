@@ -1,0 +1,15 @@
+{"time":"2025-06-02T13:24:40.249426763-05:00","level":"INFO","msg":"stream: starting","core version":"0.19.11","symlink path":"/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/wandb/run-20250602_132440-jl8hqq79/logs/debug-core.log"}
+{"time":"2025-06-02T13:24:40.414015202-05:00","level":"INFO","msg":"created new stream","id":"jl8hqq79"}
+{"time":"2025-06-02T13:24:40.414079326-05:00","level":"INFO","msg":"stream: started","id":"jl8hqq79"}
+{"time":"2025-06-02T13:24:40.414162779-05:00","level":"INFO","msg":"writer: Do: started","stream_id":"jl8hqq79"}
+{"time":"2025-06-02T13:24:40.414264538-05:00","level":"INFO","msg":"sender: started","stream_id":"jl8hqq79"}
+{"time":"2025-06-02T13:24:40.414260908-05:00","level":"INFO","msg":"handler: started","stream_id":"jl8hqq79"}
+{"time":"2025-06-02T13:24:40.55257467-05:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-06-02T13:28:48.797150091-05:00","level":"INFO","msg":"stream: closing","id":"jl8hqq79"}
+{"time":"2025-06-02T13:28:48.797273558-05:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-06-02T13:28:48.802315972-05:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-06-02T13:28:49.200177014-05:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-06-02T13:28:49.292339155-05:00","level":"INFO","msg":"handler: closed","stream_id":"jl8hqq79"}
+{"time":"2025-06-02T13:28:49.292387418-05:00","level":"INFO","msg":"sender: closed","stream_id":"jl8hqq79"}
+{"time":"2025-06-02T13:28:49.292383777-05:00","level":"INFO","msg":"writer: Close: closed","stream_id":"jl8hqq79"}
+{"time":"2025-06-02T13:28:49.292509439-05:00","level":"INFO","msg":"stream: closed","id":"jl8hqq79"}

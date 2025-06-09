@@ -1,31 +1,16 @@
 import torch
 from torch.utils.data import DataLoader
-from torch import nn
-import sys
-sys.path.append('/scr/vidit/Foundation_Models/FoundationModels')
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from skimage import io
-import skimage
-import importlib
 from tqdm import tqdm
 
 from vision_transformer import vit_small
-from torchvision.models import resnet18, ResNet18_Weights
-from timm import create_model
 import torch.nn.functional as F
-import sys
 
-import argparse
-
-from FoundationModels.dataset.dataset import IterableImageArchive
-from FoundationModels.dataset import dataset_config
-from FoundationModels.dataset.dataset_functions import randomize, split_for_workers, get_proc_split
+from FoundationModels.FoundationModels.dataset.dataset import IterableImageArchive
+from FoundationModels.FoundationModels.dataset import dataset_config
+from FoundationModels.FoundationModels.dataset.dataset_functions import *
 from torch.utils.data import DataLoader
 from torchvision.transforms import v2
-from torchvision import datasets, transforms
-
 
 transform = v2.Compose([
     v2.CenterCrop(224),
@@ -38,7 +23,7 @@ config = dataset_config.DatasetConfig(
             split_fns=[randomize, split_for_workers],
             transform=transform,
             seed=42
-            )
+        )
 
 dataset = IterableImageArchive(config)
 data_loader = DataLoader(dataset=dataset, batch_size=512, num_workers=8, worker_init_fn=dataset.worker_init_fn)
@@ -64,7 +49,6 @@ def create_pad(images, patch_width, patch_height): # new method for vit model
     
     if pad_height % 2 != 0:
         pad_bottom += 1
-        
 
     padded_images = F.pad(images, (pad_left, pad_right, pad_top, pad_bottom), mode='constant', value=0)
     
@@ -141,5 +125,5 @@ all_features = np.concatenate(all_features, axis=0)
 all_features = np.squeeze(all_features)  # Remove any singleton dimensions if needed.
 
 # Save the features to a NumPy file.
-np.save(feature_file, {"features": all_features, "filepaths": all_filepaths})
-print(f"Features saved to {feature_file}")
+# np.save(feature_file, {"features": all_features, "filepaths": all_filepaths})
+# print(f"Features saved to {feature_file}")

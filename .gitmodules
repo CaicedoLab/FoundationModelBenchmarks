@@ -1,0 +1,3 @@
+[submodule "morphem/FoundationModels"]
+	path = morphem/FoundationModels
+	url = git@github.com:CaicedoLab/FoundationModels.git

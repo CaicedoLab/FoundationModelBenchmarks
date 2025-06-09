@@ -1,0 +1,21 @@
+name: chammi
+channels:
+  - conda-forge
+  - https://repo.anaconda.com/pkgs/main
+  - https://repo.anaconda.com/pkgs/r
+dependencies:
+  - bioconda::snakemake-minimal=8.16.0
+  - cellpose=3.0.11
+  - opencv-python-headless
+  - pandas
+  - pip
+  - polars-lts-cpu=1.22.0
+  - python=3.11
+  - pytorch::pytorch
+  - pytorch::torchvision
+  - safetensors=0.5.2
+  - scikit-image=0.25.2
+  - scikit-learn=1.6.1
+  - snakemake
+  - ipykernel
+  - faiss-cpu

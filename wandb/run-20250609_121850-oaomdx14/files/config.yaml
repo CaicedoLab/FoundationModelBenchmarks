@@ -1,0 +1,40 @@
+_wandb:
+    value:
+        cli_version: 0.20.1
+        m: []
+        python_version: 3.11.13
+        t:
+            "1":
+                - 1
+                - 41
+                - 49
+                - 63
+            "2":
+                - 1
+                - 41
+                - 49
+                - 63
+            "3":
+                - 13
+                - 16
+                - 55
+            "4": 3.11.13
+            "5": 0.20.1
+            "12": 0.20.1
+            "13": linux-x86_64
+batch_size:
+    value: 256
+feat_dir:
+    value: /scr/jpeters/chammi_eval/vit_s_10_warmup_epoch
+gpu:
+    value: 0
+model:
+    value: dinov2
+model_path:
+    value: /scr/jpeters/dino_artifacts/vit_s_10_warmup_epoch
+model_size:
+    value: base
+name:
+    value: vit_s_10_warmup_epoch
+root_dir:
+    value: /scr/data/CHAMMI/dataset/

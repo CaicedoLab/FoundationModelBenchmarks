@@ -10,3 +10,6 @@
 /morphem/__pycache__/
 /morphem/*.npy
 
+# pixi environments
+.pixi
+*.egg-info

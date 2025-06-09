@@ -1,0 +1,8 @@
+/scr/jpeters/dino_artifacts/vit_s_default_params/eval/*/teacher_checkpoint.pth
+Traceback (most recent call last):
+  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/feature_extraction.py", line 386, in <module>
+    get_save_features(
+  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/feature_extraction.py", line 232, in get_save_features
+    with open(config_path) as f:
+         ^^^^^^^^^^^^^^^^^
+NotADirectoryError: [Errno 20] Not a directory: '/scr/jpeters/dino_artifacts/vit_s_default_params/eval/training_12499/teacher_checkpoint.pth/config.yaml'

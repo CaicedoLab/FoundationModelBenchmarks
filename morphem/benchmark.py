@@ -2,7 +2,8 @@
 import pandas as pd
 import os
 import json
-from morphem.evaluation import evaluate, create_umap
+import argparse
+from evaluation import evaluate, create_umap
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -88,3 +89,37 @@ def run_benchmark(root_dir, dest_dir, feature_dir, feature_file, classifier='knn
         full_result_df.to_csv(f'{dest_dir}/{classifier}_full_results.csv', index=False)
         
     return full_result_df
+
+def main(root_dir, dest_dir, feature_dir, feature_file, classifier, umap, use_gpu, knn_metric):
+    run_benchmark(root_dir, dest_dir, feature_dir, feature_file, classifier, umap, use_gpu, knn_metric)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Benchmark Args")
+    parser.add_argument('--root-dir', type=str,
+                        help='The root directory for data processing.')
+    parser.add_argument('--dest-dir', type=str,
+                        help='The destination directory for output files.')
+    parser.add_argument('--feature-dir', type=str,
+                        help='The directory containing feature files.')
+    parser.add_argument('--feature-file', type=str,
+                        help='The name of the feature file.')
+    parser.add_argument('--classifier', type=str, default='knn',
+                        choices=['knn'],
+                        help='The classification algorithm to use. Default: %(default)s')
+    parser.add_argument('--umap', action='store_true',
+                        help='Enable UMAP dimensionality reduction. Default: %(default)s')
+    parser.add_argument('--use-gpu', action='store_true',
+                        help='Enable GPU usage for processing. Default: %(default)s')
+    parser.add_argument('--knn-metric', type=str, default='l2',
+                        help='The metric to use for KNN classification. Default: %(default)s')
+
+    args = parser.parse_args()
+
+    main(root_dir=args.root_dir,
+         dest_dir=args.dest_dir,
+         feature_dir=args.feature_dir,
+         feature_file=args.feature_file,
+         classifier=args.classifier,
+         umap=args.umap,
+         use_gpu=args.use_gpu,
+         knn_metric=args.knn_metric)

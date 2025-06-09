@@ -1,0 +1,50 @@
+  0%|                                                                                                                       | 0/255 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/feature_extraction.py", line 396, in <module>
+    get_save_features(
+  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/feature_extraction.py", line 299, in get_save_features
+    output = dinov2_model(single_channel.to(device))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/MORGRIDGE/jpeters/miniconda3/envs/weakly-supervised/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/MORGRIDGE/jpeters/miniconda3/envs/weakly-supervised/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/feature_extraction.py", line 134, in forward
+    return nn.functional.normalize(self.model(samples), dim=1, p=2)
+                                   ^^^^^^^^^^^^^^^^^^^
+  File "/home/MORGRIDGE/jpeters/miniconda3/envs/weakly-supervised/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/MORGRIDGE/jpeters/miniconda3/envs/weakly-supervised/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/FoundationModels/dinov2/dinov2/models/vision_transformer.py", line 325, in forward
+    ret = self.forward_features(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/FoundationModels/dinov2/dinov2/models/vision_transformer.py", line 261, in forward_features
+    x = blk(x)
+        ^^^^^^
+  File "/home/MORGRIDGE/jpeters/miniconda3/envs/weakly-supervised/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/MORGRIDGE/jpeters/miniconda3/envs/weakly-supervised/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/FoundationModels/dinov2/dinov2/models/vision_transformer.py", line 40, in forward
+    x = b(x)
+        ^^^^
+  File "/home/MORGRIDGE/jpeters/miniconda3/envs/weakly-supervised/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/MORGRIDGE/jpeters/miniconda3/envs/weakly-supervised/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/./FoundationModels/dinov2/dinov2/layers/block.py", line 255, in forward
+    return super().forward(x_or_x_list)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/./FoundationModels/dinov2/dinov2/layers/block.py", line 113, in forward
+    x = x + ffn_residual_func(x)
+        ~~^~~~~~~~~~~~~~~~~~~~~~
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 74.00 MiB. GPU 0 has a total capacity of 47.54 GiB of which 71.75 MiB is free. Including non-PyTorch memory, this process has 47.46 GiB memory in use. Of the allocated memory 46.96 GiB is allocated by PyTorch, and 191.98 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)

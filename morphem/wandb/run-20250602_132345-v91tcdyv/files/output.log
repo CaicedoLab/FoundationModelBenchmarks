@@ -1,0 +1,11 @@
+  0%|                                                                                                                      | 0/5426 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/feature_extraction.py", line 396, in <module>
+    get_save_features(
+  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/feature_extraction.py", line 306, in get_save_features
+    batch_feat = np.concatenate(batch_feat, axis=1)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/MORGRIDGE/jpeters/miniconda3/envs/weakly-supervised/lib/python3.11/site-packages/torch/_tensor.py", line 1225, in __array__
+    return self.numpy()
+           ^^^^^^^^^^^^
+TypeError: can't convert cuda:0 device type tensor to numpy. Use Tensor.cpu() to copy the tensor to host memory first.
