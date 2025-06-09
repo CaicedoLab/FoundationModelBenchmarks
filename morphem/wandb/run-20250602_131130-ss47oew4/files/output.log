@@ -1,7 +1,0 @@
-Traceback (most recent call last):
-  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/feature_extraction.py", line 385, in <module>
-    get_save_features(
-  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/feature_extraction.py", line 228, in get_save_features
-    model_path = glob.glob(glob_path)[0]
-                 ~~~~~~~~~~~~~~~~~~~~^^^
-IndexError: list index out of range

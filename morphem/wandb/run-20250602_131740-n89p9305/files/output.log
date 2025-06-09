@@ -1,7 +1,0 @@
-  0%|                                                                                                                       | 0/255 [00:00<?, ?it/s]
-Traceback (most recent call last):
-  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/feature_extraction.py", line 385, in <module>
-    get_save_features(
-  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/feature_extraction.py", line 291, in get_save_features
-    raise ValueError("Either a vit or mae model must be provided")
-ValueError: Either a vit or mae model must be provided

@@ -1,7 +1,0 @@
-{"time":"2025-06-02T15:40:44.772264577-05:00","level":"INFO","msg":"stream: starting","core version":"0.19.11","symlink path":"/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/wandb/run-20250602_154044-xvunmkjm/logs/debug-core.log"}
-{"time":"2025-06-02T15:40:44.931270308-05:00","level":"INFO","msg":"created new stream","id":"xvunmkjm"}
-{"time":"2025-06-02T15:40:44.9312891-05:00","level":"INFO","msg":"stream: started","id":"xvunmkjm"}
-{"time":"2025-06-02T15:40:44.931398417-05:00","level":"INFO","msg":"writer: Do: started","stream_id":"xvunmkjm"}
-{"time":"2025-06-02T15:40:44.931471364-05:00","level":"INFO","msg":"handler: started","stream_id":"xvunmkjm"}
-{"time":"2025-06-02T15:40:44.931500501-05:00","level":"INFO","msg":"sender: started","stream_id":"xvunmkjm"}
-{"time":"2025-06-02T15:40:45.081282918-05:00","level":"INFO","msg":"Starting system monitor"}

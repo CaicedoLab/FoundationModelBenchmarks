@@ -1,8 +1,0 @@
-  7%|███████▊                                                                                                    | 393/5426 [00:18<04:01, 20.80it/s]
-Traceback (most recent call last):
-  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/feature_extraction.py", line 396, in <module>
-    get_save_features(
-  File "/mnt/cephfs/mir/jcaicedo/morphem/repos/FoundationModelBenchmarks/morphem/feature_extraction.py", line 300, in get_save_features
-    feat_temp = output.float().cpu().detach().numpy()
-                ^^^^^^^^^^^^^^^^^^^^
-KeyboardInterrupt
