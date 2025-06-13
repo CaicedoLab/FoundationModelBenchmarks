@@ -14,4 +14,4 @@
 .pixi
 *.egg-info
 
-/wandb
+wandb
