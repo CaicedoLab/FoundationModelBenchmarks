@@ -179,7 +179,7 @@ def get_save_features(feature_dir, root_dir, model_check, gpu, batch_size):
         feature_path = feature_path = f'{feature_dir}/{dataset_name}/{feature_file}'
         np.save(feature_path, all_feat)
         torch.cuda.empty_cache() # new line
-        
+
 
 
 def get_parser():
