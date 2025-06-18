@@ -19,6 +19,7 @@ import argparse
 import torch
 import os
 import glob
+import re
 
 from omegaconf import OmegaConf
 from FoundationModels.dinov2.dinov2.configs import dinov2_default_config
@@ -232,14 +233,25 @@ def get_save_features(
     mae_model, vit_model, dinov2_model = None, None, None
     if model_check == 'dinov2':
         glob_path = os.path.join(model_weights, 'eval', '*', 'teacher_checkpoint.pth')
-        model_path = glob.glob(glob_path)[0]
+        eval_checkpoints = sorted(glob.glob(glob_path))
+        eval_checkpoint_its = [int(re.search(r"training_(\d+)/", check_name).group(1)) for check_name in eval_checkpoints]
+        latest_eval = max(eval_checkpoint_its)
+        checkpoint_path = [check for check in eval_checkpoints if str(latest_eval) in check][0]
+        
+        possible_final_check = [check for check in eval_checkpoints if "final_model" in check]
+        
+        if len(possible_final_check) == 1:
+            checkpoint_path = possible_final_check[0]
+        
+        print(f"Running with model gathered from: {checkpoint_path}")
+        
         config_path = os.path.join(model_weights, 'config.yaml')        
         default_cfg = OmegaConf.create(dinov2_default_config)
         with open(config_path, 'r') as f:
             cfg = OmegaConf.load(f)
         cfg = OmegaConf.merge(default_cfg, cfg)
         dinov2_model, _ = build_model_from_cfg(cfg, only_teacher=True) # type: ignore
-        load_pretrained_weights(dinov2_model, model_path, 'teacher')
+        load_pretrained_weights(dinov2_model, checkpoint_path, 'teacher')
         dinov2_model.eval()
         dinov2_model.cuda()
         dinov2_model = ModelWithNormalize(dinov2_model)        

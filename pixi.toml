@@ -6,12 +6,12 @@ platforms = ["linux-64"]
 version = "0.1.0"
 
 [feature.extract.tasks.extract]
-args = ["name"]
-cmd = "python morphem/feature_extraction.py --root-dir /scr/data/CHAMMI/dataset/ --feat-dir /scr/jpeters/chammi_eval/{{ name }} --model dinov2 --model-size base --model-path /scr/jpeters/dino_artifacts/{{ name }} --gpu 0 --batch-size 256 --name {{ name }}" 
+args = ["name", { arg='gpu', default='0'} ]
+cmd = "python morphem/feature_extraction.py --root-dir /scr/data/CHAMMI/dataset/ --feat-dir /scr/jpeters/chammi_eval/{{ name }} --model dinov2 --model-size base --model-path /mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/dino_artifacts/{{ name }} --gpu {{ gpu }} --batch-size 128 --name {{ name }}" 
 
 [feature.score.tasks.score]
 args = ["name"]
-cmd = "python morphem/benchmark.py --root-dir /scr/data/CHAMMI/dataset --dest-dir /scr/jpeters/CHAMMI_scores/{{ name }} --feature-dir /scr/jpeters/chammi_eval/{{ name }} --feature-file pretrained_dinov2_vit_features.npy" 
+cmd = "python morphem/benchmark.py --root-dir /scr/data/CHAMMI/dataset --dest-dir /mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_scores/{{ name }} --feature-dir /scr/jpeters/chammi_eval/{{ name }} --feature-file pretrained_dinov2_vit_features.npy" 
 [environments]
 score = ["score"]
 extract = ["extract"]
