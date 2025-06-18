@@ -4,6 +4,7 @@ import os
 import json
 import argparse
 from evaluation import evaluate, create_umap
+import wandb
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -83,15 +84,32 @@ def run_benchmark(root_dir, dest_dir, feature_dir, feature_file, classifier='knn
                         'accuracy': results["accuracies"],'f1_score_macro': results["f1scores_macro"]})
         full_result_df = pd.concat([full_result_df, result_temp]).reset_index(drop=True)
     
-    if classifier == 'knn':        
-        full_result_df.to_csv(f'{dest_dir}/{classifier}_{knn_metric}_full_results.csv', index=False) 
+    save_path = ''
+    if classifier == 'knn':   
+        save_path = f'{dest_dir}/{classifier}_{knn_metric}_full_results.csv'     
+        full_result_df.to_csv(save_path, index=False) 
     else:
-        full_result_df.to_csv(f'{dest_dir}/{classifier}_full_results.csv', index=False)
+        save_path = f'{dest_dir}/{classifier}_full_results.csv'
+        full_result_df.to_csv(save_path, index=False)
+
+    try:
+        wandb.init(
+            project="dinov2_chammi",
+            id=os.path.basename(feature_dir),
+            resume="must"
+        )
+        
+        score_artifact = wandb.Artifact("CHAMMI_KNN", 'benchmark')
+        score_artifact.add_file(save_path)
+        wandb.log_artifact(score_artifact)
+    except:
+        print("Score was not logged to wandb.")
         
     return full_result_df
 
 def main(root_dir, dest_dir, feature_dir, feature_file, classifier, umap, use_gpu, knn_metric):
     run_benchmark(root_dir, dest_dir, feature_dir, feature_file, classifier, umap, use_gpu, knn_metric)
+    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Benchmark Args")

@@ -19,7 +19,6 @@ import argparse
 import torch
 import os
 import glob
-import wandb
 
 from omegaconf import OmegaConf
 from FoundationModels.dinov2.dinov2.configs import dinov2_default_config
@@ -264,10 +263,7 @@ def get_save_features(
 
         total_steps = len(train_dataloader)
         all_feat = []
-        log_freq = 5
         for index, (images, label) in tqdm(enumerate(train_dataloader), total=total_steps):
-            if index % log_freq == 0:
-                wandb.log(data={"Steps % Processed": index/total_steps})
             if vit_model:  
                 patch_embed = vit_model.patch_embed
                 conv_layer = patch_embed.proj
@@ -384,12 +380,6 @@ if __name__ == "__main__":
 
     parser = get_parser()
     args = parser.parse_args()
-
-    wandb.init(
-        project="dinov2_chammi",
-        config=vars(args),
-        name="test_dinov2"
-    )
 
     root_dir = path_expansion(args.root_dir)
     feat_dir = path_expansion(args.feat_dir)
