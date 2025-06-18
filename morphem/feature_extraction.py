@@ -254,7 +254,7 @@ def get_save_features(
         load_pretrained_weights(dinov2_model, checkpoint_path, 'teacher')
         dinov2_model.eval()
         dinov2_model.cuda()
-        dinov2_model = ModelWithNormalize(dinov2_model)        
+        dinov2_model = ModelWithNormalize(dinov2_model).to(device)        
         feature_file = "pretrained_dinov2_vit_features.npy"
     elif model_check == "mae":
         mae_instance = MAEModel(gpu, model_weights, model_size)

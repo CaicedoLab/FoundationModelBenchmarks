@@ -17,9 +17,9 @@ score = ["score"]
 extract = ["extract"]
 
 [tasks.eval]
-args = ["name"]
+args = ["name", { arg='gpu', default='0'}]
 depends-on = [
-  { task = "extract", environment = "extract", args=["{{ name }}"]},
+  { task = "extract", environment = "extract", args=["{{ name }}", "{{ gpu }}"]},
   { task = "score", environment = "score", args=["{{ name }}"]},
 ]
 
@@ -39,6 +39,8 @@ faiss-gpu = "1.7.2.*"
 matplotlib = ">=3.10.3,<4"
 umap-learn = ">=0.5.7,<0.6"
 seaborn = ">=0.13.2,<0.14"
+wandb = ">=0.20.1,<0.21"
+
 
 [feature.extract.dependencies]
 cellpose = "3.0.11.*"
@@ -50,4 +52,3 @@ ipykernel = "*"
 faiss-cpu = "*"
 timm = ">=1.0.15,<2"
 omegaconf = ">=2.3.0,<3"
-wandb = ">=0.20.1,<0.21"
