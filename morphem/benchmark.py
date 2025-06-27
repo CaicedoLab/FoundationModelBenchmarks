@@ -92,18 +92,6 @@ def run_benchmark(root_dir, dest_dir, feature_dir, feature_file, classifier='knn
         save_path = f'{dest_dir}/{classifier}_full_results.csv'
         full_result_df.to_csv(save_path, index=False)
 
-    try:
-        wandb.init(
-            project="dinov2_chammi",
-            id=os.path.basename(feature_dir),
-            resume="must"
-        )
-        
-        score_artifact = wandb.Artifact("CHAMMI_KNN", 'benchmark')
-        score_artifact.add_file(save_path)
-        wandb.log_artifact(score_artifact)
-    except:
-        print("Score was not logged to wandb.")
         
     return full_result_df
 
