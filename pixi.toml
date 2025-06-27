@@ -12,6 +12,7 @@ cmd = "python morphem/feature_extraction.py --root-dir /scr/data/CHAMMI/dataset/
 [feature.score.tasks.score]
 args = ["name"]
 cmd = "python morphem/benchmark.py --root-dir /scr/data/CHAMMI/dataset --dest-dir /mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_scores/{{ name }} --feature-dir /scr/jpeters/chammi_eval/{{ name }} --feature-file pretrained_dinov2_vit_features.npy" 
+
 [environments]
 score = ["score"]
 extract = ["extract"]
@@ -33,6 +34,9 @@ torchvision = ">=0.22.0,<0.23"
 pandas = ">=2.3.0,<3"
 pip = "*"
 numpy = ">=1.20.0,<2"
+pyzmq = ">=27.0.0, <28"
+wandb = ">=0.20.1, <0.21"
+polars = ">=1.31.0, <2"
 
 [feature.score.dependencies]
 faiss-gpu = "1.7.2.*"

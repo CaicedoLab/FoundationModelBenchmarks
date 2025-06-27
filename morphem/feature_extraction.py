@@ -234,7 +234,13 @@ def get_save_features(
     if model_check == 'dinov2':
         glob_path = os.path.join(model_weights, 'eval', '*', 'teacher_checkpoint.pth')
         eval_checkpoints = sorted(glob.glob(glob_path))
-        eval_checkpoint_its = [int(re.search(r"training_(\d+)/", check_name).group(1)) for check_name in eval_checkpoints if "final" not in check_name]
+        
+        eval_checkpoint_its = []
+        for check_name in eval_checkpoints:
+            if "final" in check_name: continue
+            number = int(check_name.split('training_')[-1].split("/teacher")[0])
+            eval_checkpoint_its.append(number)
+        #  = [int() for check_name in eval_checkpoints if "final" not in check_name]
         latest_eval = max(eval_checkpoint_its)
         checkpoint_path = [check for check in eval_checkpoints if str(latest_eval) in check][0]
         
