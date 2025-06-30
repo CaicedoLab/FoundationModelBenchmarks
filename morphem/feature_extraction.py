@@ -224,7 +224,14 @@ def create_pad(images, patch_width, patch_height):  # new method for vit model
 
 
 def get_save_features(
-    feature_dir, root_dir, model_weights, model_check, model_size, gpu, batch_size
+    feature_dir, 
+    root_dir, 
+    model_weights, 
+    model_check, 
+    model_size, 
+    gpu, 
+    batch_size,
+    checkpoint
 ):
     
     dataset_names = ["Allen", "CP", "HPA"]
@@ -232,23 +239,27 @@ def get_save_features(
 
     mae_model, vit_model, dinov2_model = None, None, None
     if model_check == 'dinov2':
-        glob_path = os.path.join(model_weights, 'eval', '*', 'teacher_checkpoint.pth')
-        eval_checkpoints = sorted(glob.glob(glob_path))
-        
-        eval_checkpoint_its = []
-        for check_name in eval_checkpoints:
-            if "final" in check_name: continue
-            number = int(check_name.split('training_')[-1].split("/teacher")[0])
-            eval_checkpoint_its.append(number)
-        #  = [int() for check_name in eval_checkpoints if "final" not in check_name]
-        latest_eval = max(eval_checkpoint_its)
-        checkpoint_path = [check for check in eval_checkpoints if str(latest_eval) in check][0]
-        
-        possible_final_check = [check for check in eval_checkpoints if "final_model" in check]
-        
-        if len(possible_final_check) == 1:
-            checkpoint_path = possible_final_check[0]
-        
+        eval_dir = os.path.join(model_weights, 'eval')
+        checkpoint_dirs = os.listdir(eval_dir)
+        if checkpoint == "auto":
+            check_iterations = []
+            for check_dir in checkpoint_dirs:
+                if "final_model" not in check_dir:
+                    check_val = int(check_dir.split('_')[-1])
+                    check_iterations.append(check_val)
+            
+            latest_eval = max(check_iterations)
+            checkpoint_path = os.path.join(eval_dir, f"training_{latest_eval}", "teacher_checkpoint.pth")
+            
+            possible_final_check = ["final_model" in checkpoint_dir for checkpoint_dir in checkpoint_dirs]
+            if any(possible_final_check):
+                checkpoint_path = os.path.join(eval_dir, "final_model", "teacher_checkpoint.pth")
+        else:
+            has_checkpoint = any([checkpoint in checkpoint_dir for checkpoint_dir in checkpoint_dirs])
+            if has_checkpoint:
+                checkpoint_path = os.path.join(eval_dir, f"training_{checkpoint}", "teacher_checkpoint.pth")
+            else:
+                raise ValueError("Checkpoint not found, please check if it's a valid checkpoint.")
         print(f"Running with model gathered from: {checkpoint_path}")
         
         config_path = os.path.join(model_weights, 'config.yaml')        
@@ -384,11 +395,12 @@ def get_parser():
         help="Select a batch size that works for your gpu size",
         required=True,
     )
+
     parser.add_argument(
-        "--name",
+        "--checkpoint",
         type=str,
-        help="The root directory of the original images",
-        required=True,
+        default="auto", # type latest for the script to calculate it...
+        help="What checkpoint should be evaluated for dinov2. This should be the number in training_number.",
     )
 
     return parser
@@ -411,4 +423,5 @@ if __name__ == "__main__":
         args.model_size,
         args.gpu,
         args.batch_size,
+        args.checkpoint
     )

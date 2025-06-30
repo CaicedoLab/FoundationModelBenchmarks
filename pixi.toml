@@ -7,7 +7,11 @@ version = "0.1.0"
 
 [feature.extract.tasks.extract]
 args = ["name", { arg='gpu', default='0'} ]
-cmd = "python morphem/feature_extraction.py --root-dir /scr/data/CHAMMI/dataset/ --feat-dir /scr/jpeters/chammi_eval/{{ name }} --model dinov2 --model-size base --model-path /mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/dino_artifacts/{{ name }} --gpu {{ gpu }} --batch-size 128 --name {{ name }}" 
+cmd = "python morphem/feature_extraction.py --root-dir /scr/data/CHAMMI/dataset/ --feat-dir /scr/jpeters/chammi_eval/{{ name }} --model dinov2 --model-size base --model-path /mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/dino_artifacts/{{ name }} --gpu {{ gpu }} --batch-size 128" 
+
+[feature.extract.tasks.extract_checkpoint]
+args = ["name", "checkpoint", { arg='gpu', default='0'} ]
+cmd = "python morphem/feature_extraction.py --root-dir /scr/data/CHAMMI/dataset/ --feat-dir /scr/jpeters/chammi_eval/{{ name }}/{{ checkpoint }} --model dinov2 --model-size base --model-path /mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/dino_artifacts/{{ name }} --gpu {{ gpu }} --batch-size 128 --checkpoint {{ checkpoint }}" 
 
 [feature.score.tasks.score]
 args = ["name"]
