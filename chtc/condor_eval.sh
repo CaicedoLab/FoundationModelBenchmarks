@@ -5,7 +5,7 @@ executable = execute_eval.sh
 arguments = $(Process)
 output = train$(Cluster)_$(Process).out
 error = train$(Cluster)_$(Process).err
-environment = "WANDB_API_KEY=$(wandb_key) CHECKPOINT=$(checkpoint)"
+environment = "WANDB_API_KEY=$(wandb_key) MODEL=$(model) CHECKPOINT=$(checkpoint) OUTPUT=$(output)"
 
 # Specify that HTCondor should transfer files to and from the
 #  computer where each job runs. The last of these lines *would* be
