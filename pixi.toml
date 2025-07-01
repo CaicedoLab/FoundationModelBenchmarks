@@ -29,19 +29,18 @@ depends-on = [
 ]
 
 [system-requirements]
-cuda = "11.7"
+cuda = "12.4"
 
 [dependencies]
 python = "3.11.*"
+pytorch = ">=2.7.0,<3"
+torchvision = ">=0.22.0,<0.23"
 pandas = ">=2.3.0,<3"
 pip = "*"
 numpy = ">=1.20.0,<2"
 pyzmq = ">=27.0.0, <28"
 wandb = ">=0.20.1, <0.21"
 polars = ">=1.31.0, <2"
-
-[pypi-dependencies]
-torch = { version ="==2.0.0", index = "https://download.pytorch.org/whl/cu117" }
 
 [feature.score.dependencies]
 faiss-gpu = "1.7.2.*"
