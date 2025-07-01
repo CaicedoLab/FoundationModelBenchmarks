@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.7.1-cudnn8-runtime-ubuntu22.04
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu20.04
 
 WORKDIR /app
 
@@ -15,7 +15,7 @@ RUN chmod -R 777 /root
 
 COPY pixi.toml pixi.lock ./
 
-RUN pixi install --locked -e extract
+RUN CONDA_OVERRIDE_CUDA="12.4" pixi install --locked -e extract
 
 RUN pixi shell-hook --shell bash -e extract > /etc/profile.d/pixi.sh
 
