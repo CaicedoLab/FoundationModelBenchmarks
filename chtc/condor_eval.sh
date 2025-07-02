@@ -16,7 +16,7 @@ transfer_input_files = execute_eval.sh, /home/jgpeters3/FoundationModelBenchmark
 # Tell HTCondor what amount of compute resources 
 #  each job will need on the computer where it runs.
 # Machine == "jcaicedogpu0000.chtc.wisc.edu" || Machine == "jcaicedogpu0001.chtc.wisc.edu" || Machine == "jcaicedogpu0002.chtc.wisc.edu" ||
-requirements = (Machine == "coba2000.chtc.wisc.edu")
+requirements = (Machine == "jcaicedogpu0001.chtc.wisc.edu" || Machine == "jcaicedogpu0002.chtc.wisc.edu" || Machine == "coba2000.chtc.wisc.edu")
 request_cpus = 12
 request_memory = 64GB
 request_disk =  96GB

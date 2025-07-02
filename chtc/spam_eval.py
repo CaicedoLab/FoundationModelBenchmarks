@@ -5,7 +5,7 @@ import sys
 # CHECKPOINTS_ROOT = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/dino_artifacts'
 # FEATURES_ROOT    = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
 
-CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/dino_artifacts'
+CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/kept_checkpoints'
 FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
 
 def main():
@@ -26,10 +26,8 @@ def main():
             checkpoints_to_eval.extend([(model, checkpoint) for checkpoint in non_eval_checkpoints])
         else:
             checkpoints_to_eval.extend([(model, checkpoint) for checkpoint in checkpoints])
-            
+
     for (model, checkpoint) in checkpoints_to_eval:    
-        print(model, checkpoint)
-        sys.exit()
         result = subprocess.run(
                     f"condor_submit wandb_key={os.environ.get('WANDB_API_KEY')} model={os.path.join(CHECKPOINTS_ROOT, model)} checkpoint={checkpoint} output={os.path.join(FEATURES_ROOT, model, checkpoint)} condor_eval.sh",
                     shell=True,
@@ -37,6 +35,7 @@ def main():
                     check=True,
                     text=True
                 )
+        sys.exit()
 
 if __name__ == "__main__":
     main()
