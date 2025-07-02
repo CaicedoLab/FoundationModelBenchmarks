@@ -2,11 +2,11 @@ import os
 import subprocess
 import sys
 
-# CHECKPOINTS_ROOT = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/dino_artifacts'
-# FEATURES_ROOT    = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
+CHECKPOINTS_ROOT = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/kept_checkpoints'
+FEATURES_ROOT    = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
 
-CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/kept_checkpoints'
-FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
+# CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/kept_checkpoints'
+# FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
 
 def main():
     models = os.listdir(CHECKPOINTS_ROOT)
@@ -27,15 +27,18 @@ def main():
         else:
             checkpoints_to_eval.extend([(model, checkpoint) for checkpoint in checkpoints])
 
-    for (model, checkpoint) in checkpoints_to_eval:    
+    for (model, checkpoint) in checkpoints_to_eval:   
+        wandb_key =  os.environ.get('WANDB_API_KEY')
+        # wandb_key = "$WANDB_API_KEY"
+        submit_cmd = f"condor_submit wandb_key={wandb_key} model={os.path.join(CHECKPOINTS_ROOT, model)} checkpoint={checkpoint} output={os.path.join(FEATURES_ROOT, model, checkpoint)} condor_eval.sh"
+        # print(submit_cmd)
         result = subprocess.run(
-                    f"condor_submit wandb_key={os.environ.get('WANDB_API_KEY')} model={os.path.join(CHECKPOINTS_ROOT, model)} checkpoint={checkpoint} output={os.path.join(FEATURES_ROOT, model, checkpoint)} condor_eval.sh",
+                    submit_cmd,
                     shell=True,
                     capture_output=True,
                     check=True,
                     text=True
                 )
-        sys.exit()
 
 if __name__ == "__main__":
     main()
