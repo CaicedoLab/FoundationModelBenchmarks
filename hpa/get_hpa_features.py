@@ -156,12 +156,12 @@ class UnZippedImageArchive(Dataset):
 dataset = UnZippedImageArchive(root_dir='/scr/data/cell_crops/')
 
 
-
 def extract_features_hpa(dataloader: torch.utils.data.Dataset, output_folder: str):
     """Extract features from HPA single-cell crops"""
 
-    all_features = []
+    all_features_np = np.zeros((0, 1536))  # Initialize empty array for features # Second dimension is 384*4 = 1536
     all_rows = []
+    all_features = []
 
     device = torch.device(f"cuda:{accelerator.local_process_index}" if torch.cuda.is_available() else "cpu")
     vit_instance = ViTClass(accelerator.local_process_index) 
@@ -178,9 +178,8 @@ def extract_features_hpa(dataloader: torch.utils.data.Dataset, output_folder: st
     
                 output = vit_model.forward_features(single_channel)
                 feat_temp = output["x_norm_clstoken"].cpu().detach().numpy()
-
                 batch_feat.append(feat_temp)
-                
+            print(rows)
             batch_feat = np.concatenate(batch_feat, axis=1)
             all_features.append(batch_feat)
             all_rows.extend(rows)
@@ -188,7 +187,7 @@ def extract_features_hpa(dataloader: torch.utils.data.Dataset, output_folder: st
         all_features = np.concatenate(all_features)
         all_rows = np.array(all_rows)
     
-    
+    all_features = [torch.from_numpy(f) if isinstance(f, np.ndarray) else f for f in all_features]
     # Concatenate all features
     feature_data = torch.cat(all_features, dim=0)  # [N, feature_dim]
     
