@@ -226,7 +226,7 @@ def create_pad(images, patch_width, patch_height):  # new method for vit model
 def get_save_features(
     feature_dir, 
     root_dir, 
-    model_weights, 
+    model_path, 
     model_check, 
     model_size, 
     gpu, 
@@ -239,7 +239,7 @@ def get_save_features(
 
     mae_model, vit_model, dinov2_model = None, None, None
     if model_check == 'dinov2':
-        eval_dir = os.path.join(model_weights, 'eval')
+        eval_dir = os.path.join(model_path, 'eval')
         checkpoint_dirs = os.listdir(eval_dir)
         if checkpoint == "auto":
             check_iterations = []
@@ -257,12 +257,12 @@ def get_save_features(
         else:
             has_checkpoint = any([checkpoint in checkpoint_dir for checkpoint_dir in checkpoint_dirs])
             if has_checkpoint:
-                checkpoint_path = os.path.join(eval_dir, f"training_{checkpoint}", "teacher_checkpoint.pth")
+                checkpoint_path = os.path.join(eval_dir, f"{checkpoint}", "teacher_checkpoint.pth")
             else:
                 raise ValueError("Checkpoint not found, please check if it's a valid checkpoint.")
         print(f"Running with model gathered from: {checkpoint_path}")
         
-        config_path = os.path.join(model_weights, 'config.yaml')        
+        config_path = os.path.join(model_path, 'config.yaml')        
         default_cfg = OmegaConf.create(dinov2_default_config)
         with open(config_path, 'r') as f:
             cfg = OmegaConf.load(f)
@@ -274,11 +274,11 @@ def get_save_features(
         dinov2_model = ModelWithNormalize(dinov2_model).to(device)        
         feature_file = "pretrained_dinov2_vit_features.npy"
     elif model_check == "mae":
-        mae_instance = MAEModel(gpu, model_weights, model_size)
+        mae_instance = MAEModel(gpu, model_path, model_size)
         mae_model = mae_instance.get_model()
         feature_file = "pretrained_mae_features.npy"
     elif model_check == 'dinov1':
-        vit_instance = ViTClass(model_weights, model_size, gpu)
+        vit_instance = ViTClass(model_path, model_size, gpu)
         vit_model = vit_instance.get_model()
         feature_file = "pretrained_vit_features.npy"
     else:

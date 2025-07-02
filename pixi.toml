@@ -60,3 +60,7 @@ omegaconf = ">=2.3.0,<3"
 
 [feature.submit.pypi-dependencies]
 argparse = ">=1.4.0, <2"
+
+[feature.submit.dependencies]
+snakemake = ">=9.6.2,<10"
+
