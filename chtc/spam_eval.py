@@ -30,7 +30,8 @@ def main():
     for (model, checkpoint) in checkpoints_to_eval:   
         wandb_key =  os.environ.get('WANDB_API_KEY')
         # wandb_key = "$WANDB_API_KEY"
-        submit_cmd = f"condor_submit wandb_key={wandb_key} model={os.path.join(CHECKPOINTS_ROOT, model)} checkpoint={checkpoint} output={os.path.join(FEATURES_ROOT, model, checkpoint)} condor_eval.sh"
+        output_dir = os.path.join(FEATURES_ROOT, model, checkpoint)
+        submit_cmd = f"condor_submit wandb_key={wandb_key} model_path={os.path.join(CHECKPOINTS_ROOT, model)} checkpoint={checkpoint} feature_out={output_dir} condor_eval.sh"
         # print(submit_cmd)
         result = subprocess.run(
                     submit_cmd,

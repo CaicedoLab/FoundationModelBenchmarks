@@ -5,7 +5,7 @@ executable = execute_eval.sh
 arguments = $(Process)
 output = train$(Cluster)_$(Process).out
 error = train$(Cluster)_$(Process).err
-environment = "WANDB_API_KEY=$(wandb_key) MODEL=$(model) CHECKPOINT=$(checkpoint) OUTPUT=$(output)"
+environment = "WANDB_API_KEY=$(wandb_key) MODEL_PATH=$(model_path) CHECKPOINT=$(checkpoint) FEATURE_DIR=$(feature_out)"
 
 # Specify that HTCondor should transfer files to and from the
 #  computer where each job runs. The last of these lines *would* be
@@ -18,9 +18,10 @@ transfer_input_files = execute_eval.sh, /home/jgpeters3/FoundationModelBenchmark
 # Machine == "jcaicedogpu0000.chtc.wisc.edu" || Machine == "jcaicedogpu0001.chtc.wisc.edu" || Machine == "jcaicedogpu0002.chtc.wisc.edu" || Machine == "coba2000.chtc.wisc.edu
 requirements = ( Machine == "jcaicedogpu0000.chtc.wisc.edu" || Machine == "jcaicedogpu0001.chtc.wisc.edu" || Machine == "jcaicedogpu0002.chtc.wisc.edu" )
 request_cpus = 12
-request_memory = 64GB
+request_memory = 48GB
 request_disk =  96GB
 request_gpus = 1
++is_resumable = true
 queue 1
 
 # run this file with condor_submit wandb_key=$WANDB_API_KEY batch=NUMBER lr=NUMBER name=NAME hyperparam_sweep.sh
