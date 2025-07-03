@@ -6,7 +6,8 @@ import polars as pl
 import argparse
 wandb.Settings(quiet=True)
 
-score_directory = "/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_scores/"
+# score_directory = "/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_scores/"
+score_directory = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/chammi_scores'
 
 def main(run_id, iteration, checkpoint_score_path):                
     score_csv = pl.read_csv(checkpoint_score_path) 

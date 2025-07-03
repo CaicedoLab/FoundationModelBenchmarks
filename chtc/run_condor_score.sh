@@ -1,0 +1,1 @@
+condor_submit wandb_key=$WANDB_API_KEY condor_score.sh
