@@ -4,7 +4,7 @@ WORKDIR /app
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl ca-certificates git && \
+    apt-get install -y --no-install-recommends curl ca-certificates unzip && \
     rm -rf /var/lib/apt/lists/*
 
 RUN curl -fsSL https://pixi.sh/install.sh | sh
@@ -19,4 +19,4 @@ RUN CONDA_OVERRIDE_CUDA="12.4" pixi install --locked -e extract
 
 RUN pixi shell-hook --shell bash -e extract > /etc/profile.d/pixi.sh
 
-CMD ["/bin/bash", "-c", ". /etc/profile.d/pixi.sh && exec /bin/bash"]
+CMD ["/bin/bash"]
