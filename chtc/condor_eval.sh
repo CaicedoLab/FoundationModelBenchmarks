@@ -15,8 +15,8 @@ when_to_transfer_output = ON_EXIT_OR_EVICT
 transfer_input_files = execute_eval.sh, /home/jgpeters3/FoundationModelBenchmarks/morphem, /hdd/jcaicedo/projects/foundation_models_and_benchmarking/chammi_dataset.zip
 # Tell HTCondor what amount of compute resources 
 #  each job will need on the computer where it runs.
-# Machine == "jcaicedogpu0000.chtc.wisc.edu" || Machine == "jcaicedogpu0001.chtc.wisc.edu" || Machine == "jcaicedogpu0002.chtc.wisc.edu" || Machine == "coba2000.chtc.wisc.edu
-requirements = ( Machine == "jcaicedogpu0000.chtc.wisc.edu" || Machine == "jcaicedogpu0001.chtc.wisc.edu" || Machine == "jcaicedogpu0002.chtc.wisc.edu" )
+# ( Machine == "jcaicedogpu0000.chtc.wisc.edu" || Machine == "jcaicedogpu0001.chtc.wisc.edu" || Machine == "jcaicedogpu0002.chtc.wisc.edu" || Machine == "coba2000.chtc.wisc.edu" )
+# requirements = ( Machine == "jcaicedogpu0000.chtc.wisc.edu" || Machine == "jcaicedogpu0001.chtc.wisc.edu" || Machine == "jcaicedogpu0002.chtc.wisc.edu" )
 request_cpus = 12
 request_memory = 48GB
 request_disk =  96GB
