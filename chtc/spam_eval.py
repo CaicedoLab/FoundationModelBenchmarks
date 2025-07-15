@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+import argparse
 
 CHECKPOINTS_ROOT = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/kept_checkpoints'
 FEATURES_ROOT    = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
@@ -8,7 +9,7 @@ FEATURES_ROOT    = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/ch
 # CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/kept_checkpoints'
 # FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
 
-def main():
+def main(dry_run: bool):
     models = os.listdir(CHECKPOINTS_ROOT)
     evaled_models = os.listdir(FEATURES_ROOT)
     
@@ -31,15 +32,22 @@ def main():
         wandb_key =  os.environ.get('WANDB_API_KEY')
         # wandb_key = "$WANDB_API_KEY"
         output_dir = os.path.join(FEATURES_ROOT, model, checkpoint)
-        submit_cmd = f"condor_submit wandb_key={wandb_key} model_path={os.path.join(CHECKPOINTS_ROOT, model)} checkpoint={checkpoint} feature_out={output_dir} condor_eval.sh"
-        # print(submit_cmd)
-        result = subprocess.run(
-                    submit_cmd,
-                    shell=True,
-                    capture_output=True,
-                    check=True,
-                    text=True
-                )
+        if dry_run:
+            print(model, checkpoint)
+        else:
+            submit_cmd = f"condor_submit wandb_key={wandb_key} model_path={os.path.join(CHECKPOINTS_ROOT, model)} checkpoint={checkpoint} feature_out={output_dir} condor_eval.sh"
+            # print(submit_cmd)
+            result = subprocess.run(
+                        submit_cmd,
+                        shell=True,
+                        capture_output=True,
+                        check=True,
+                        text=True
+                    )
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="My program")
+    parser.add_argument("-d", "--dry-run", action="store_true", help="Perform a dry run without making actual changes")
+    args = parser.parse_args()
+    
+    main(args.dry_run)
