@@ -18,13 +18,15 @@ def main(dry_run: bool, log_off: bool):
     evaled_models = os.listdir(FEATURES_ROOT)
     
     checkpoints_to_eval = []
-    for model in evaled_models:            
+    for model in evaled_models:      
+        if not model.endswith('0.0'):
+            continue
         checkpoints:list[str] = os.listdir(os.path.join(FEATURES_ROOT, model))
         checkpoints = [tuple(checkpoint.rsplit('_', 1)) for checkpoint in checkpoints]
         checkpoints.sort(key=lambda x: int(x[-1]))
         for name, check in checkpoints:
             possible_score_path = os.path.join(SCORES_ROOT, model, f'{name}_{check}')
-            if os.path.exists(possible_score_path) and f'{name}_{check}' in os.listdir(os.path.join(SCORES_ROOT, "logged", model)):
+            if os.path.exists(possible_score_path) and f'{name}_{check}' in os.listdir(os.path.join(SCORES_ROOT, model)):
                 continue
             dest_dir = os.path.join(SCORES_ROOT, model, f'{name}_{check}')
             feat_dir = os.path.join(FEATURES_ROOT, model, f'{name}_{check}')
