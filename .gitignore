@@ -17,3 +17,5 @@
 wandb
 
 *.log
+*.out
+*.err
