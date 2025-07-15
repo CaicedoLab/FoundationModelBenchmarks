@@ -16,12 +16,12 @@ transfer_input_files = execute_eval.sh, /home/jgpeters3/FoundationModelBenchmark
 # Tell HTCondor what amount of compute resources 
 #  each job will need on the computer where it runs.
 # ( Machine == "jcaicedogpu0000.chtc.wisc.edu" || Machine == "jcaicedogpu0001.chtc.wisc.edu" || Machine == "jcaicedogpu0002.chtc.wisc.edu" || Machine == "coba2000.chtc.wisc.edu" )
-# requirements = ( Machine == "jcaicedogpu0000.chtc.wisc.edu" || Machine == "jcaicedogpu0001.chtc.wisc.edu" || Machine == "jcaicedogpu0002.chtc.wisc.edu" )
+requirements = ( Machine == "jcaicedogpu0000.chtc.wisc.edu" || Machine == "jcaicedogpu0001.chtc.wisc.edu" || Machine == "jcaicedogpu0002.chtc.wisc.edu" || Machine == "coba2000.chtc.wisc.edu" )
 request_cpus = 12
 request_memory = 48GB
 request_disk =  96GB
 request_gpus = 1
-+is_resumable = true
+# +is_resumable = true
 queue 1
 
 # run this file with condor_submit wandb_key=$WANDB_API_KEY batch=NUMBER lr=NUMBER name=NAME hyperparam_sweep.sh
