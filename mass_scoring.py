@@ -19,10 +19,14 @@ def main(dry_run: bool, log_off: bool):
     
     checkpoints_to_eval = []
     for model in evaled_models:      
-        if not model.endswith('0.0'):
+        #if not model.endswith('0.1'):
+        #    continue
+        if model == "logged":
             continue
+        
         checkpoints:list[str] = os.listdir(os.path.join(FEATURES_ROOT, model))
         checkpoints = [tuple(checkpoint.rsplit('_', 1)) for checkpoint in checkpoints]
+        # print(checkpoints, model)
         checkpoints.sort(key=lambda x: int(x[-1]))
         for name, check in checkpoints:
             possible_score_path = os.path.join(SCORES_ROOT, model, f'{name}_{check}')

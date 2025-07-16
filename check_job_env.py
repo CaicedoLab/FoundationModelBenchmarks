@@ -14,14 +14,24 @@ def main():
         total_time = sum(time_values)
         if total_time > 0:
             job_id = result.split()[0]
-            result = subprocess.run(
-                        f"condor_history -l {job_id} | grep MachineAttrMachine0",
-                        shell=True,
-                        capture_output=True,
-                        check=True,
-                        text=True
-                    )
-            print(result.stdout.strip(), job_id)
+            try:
+                result = subprocess.run(
+                            f"condor_history -l {job_id}",
+                            shell=True,
+                            capture_output=True,
+                            check=True,
+                            text=True
+                        )
+                if "RUN_NAME=" in result.stdout.strip():
+                    for line in  result.stdout.strip().splitlines():
+                       if "MachineAttrMachine0" in line:
+                           machine = line
+                       elif "RUN_NAME=" in line:
+                           run_name = line
+                    
+                    print(run_name, machine)
+            except:
+                continue
 
 if __name__ == "__main__":
     main()
