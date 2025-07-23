@@ -22,7 +22,7 @@ import glob
 import re
 
 from omegaconf import OmegaConf
-from FoundationModels.dinov2.dinov2.configs import dinov2_default_config
+from FoundationModels.dinov2.dinov2.configs.config import Dinov2Config
 from FoundationModels.dinov2.dinov2.models import build_model_from_cfg
 from FoundationModels.dinov2.dinov2.utils.utils import load_pretrained_weights
 
@@ -263,7 +263,7 @@ def get_save_features(
         print(f"Running with model gathered from: {checkpoint_path}")
         
         config_path = os.path.join(model_path, 'config.yaml')        
-        default_cfg = OmegaConf.create(dinov2_default_config)
+        default_cfg = OmegaConf.create(Dinov2Config())
         with open(config_path, 'r') as f:
             cfg = OmegaConf.load(f)
         cfg = OmegaConf.merge(default_cfg, cfg)
