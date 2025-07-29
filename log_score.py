@@ -13,7 +13,7 @@ def main(run_id, iteration, checkpoint_score_path):
     score_csv = pl.read_csv(checkpoint_score_path) 
     allen_score = score_csv.filter(pl.col('dataset')=="Allen", pl.col("task")=="Task_two")['f1_score_macro'].sum()/3 # .item is eqv here
     hpa_score = score_csv.filter(pl.col('dataset')=="HPA", pl.col("task").is_in(['Task_two', "Task_three"]))['f1_score_macro'].sum()/6
-    cp_score = score_csv.filter(pl.col('dataset')=="CP", pl.col("task").is_in(['Task_two', "Task_three", "Task_three"]))['f1_score_macro'].sum()/9
+    cp_score = score_csv.filter(pl.col('dataset')=="CP", pl.col("task").is_in(['Task_two', "Task_three", "Task_four"]))['f1_score_macro'].sum()/9
     
     chammi_score = allen_score + hpa_score + cp_score
     
