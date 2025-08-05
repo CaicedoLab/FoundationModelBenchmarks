@@ -3,7 +3,7 @@ import subprocess
 import sys
 import argparse
 
-CHECKPOINTS_ROOT = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/kept_checkpoints'
+CHECKPOINTS_ROOT = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/dino_artifacts'
 FEATURES_ROOT    = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
 
 # CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/kept_checkpoints'
@@ -30,13 +30,13 @@ def main(dry_run: bool):
 
     for (model, checkpoint) in checkpoints_to_eval:   
         wandb_key =  os.environ.get('WANDB_API_KEY')
-        # wandb_key = "$WANDB_API_KEY"
+        
         output_dir = os.path.join(FEATURES_ROOT, model, checkpoint)
         if dry_run:
             print(model, checkpoint)
         else:
             submit_cmd = f"condor_submit wandb_key={wandb_key} model_path={os.path.join(CHECKPOINTS_ROOT, model)} checkpoint={checkpoint} feature_out={output_dir} condor_eval.sh"
-            # print(submit_cmd)
+            
             result = subprocess.run(
                         submit_cmd,
                         shell=True,

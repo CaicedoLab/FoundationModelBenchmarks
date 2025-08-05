@@ -4,6 +4,7 @@ import sys
 from multiprocessing import Queue, Pool, Manager
 from functools import partial
 import argparse
+from collections import defaultdict
 
 # SCORES_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_scores'
 # FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
@@ -14,8 +15,8 @@ FEATURES_ROOT    = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/ch
 ROOT_DIR = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/chammi_metadata'
 
 def main(dry_run: bool, log_off: bool):
-    scored_models = os.listdir(SCORES_ROOT)
     evaled_models = os.listdir(FEATURES_ROOT)
+    to_eval_score = defaultdict(list)
     
     checkpoints_to_eval = []
     for model in evaled_models:      
@@ -34,31 +35,44 @@ def main(dry_run: bool, log_off: bool):
                 continue
             dest_dir = os.path.join(SCORES_ROOT, model, f'{name}_{check}')
             feat_dir = os.path.join(FEATURES_ROOT, model, f'{name}_{check}')
-            
+            to_eval_score[model].append({
+                'dest': dest_dir,
+                'feat': feat_dir,
+                'model': model,
+                'check': check
+            })
+        
+    for model in to_eval_score:
+        checkpoints = to_eval_score[model]
+        has_final_checkpoint = False
+        for check in checkpoints:
+            if 'final_model' in check['dest']:
+                has_final_checkpoint = True
+        if has_final_checkpoint:
             if dry_run:
-                print(model, f'{name}_{check}')
+                    print(model)
             else:
-                script = f"python morphem/benchmark.py --root-dir {ROOT_DIR} --dest-dir {dest_dir} --feature-dir {feat_dir} --feature-file pretrained_dinov2_vit_features.npy"                
-                result = subprocess.run(
-                    script,
-                    shell=True,
-                    capture_output=False,
-                    check=True,
-                    text=True
-                )
-            
-                if not log_off:
-                    score_path = os.path.join(dest_dir, 'knn_l2_full_results.csv')
-                    log_script = f"python ./log_score.py --run-id {model} --iteration {check} --score-path {score_path}"                
+                checkpoints = sorted(checkpoints, key=lambda x: int(x['check']))
+                for check in checkpoints:
+                    script = f"python morphem/benchmark.py --root-dir {ROOT_DIR} --dest-dir {check['dest']} --feature-dir {check['feat']} --feature-file pretrained_dinov2_vit_features.npy"                
                     result = subprocess.run(
-                        log_script,
+                        script,
                         shell=True,
                         capture_output=False,
                         check=True,
                         text=True
                     )
-
-    print(checkpoints_to_eval)
+                
+                    if not log_off:
+                        score_path = os.path.join(check['dest'], 'knn_l2_full_results.csv')
+                        log_script = f"python ./log_score.py --run-id {model} --iteration {check['check']} --score-path {score_path}"                
+                        result = subprocess.run(
+                            log_script,
+                            shell=True,
+                            capture_output=False,
+                            check=True,
+                            text=True
+                        )
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="My program")

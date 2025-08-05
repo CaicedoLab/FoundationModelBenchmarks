@@ -1,10 +1,10 @@
 container_image = file:///staging/groups/caicedo_group/images/feat_extract.sif
-log = train$(Cluster).log
+log = logs/train$(Cluster).log
 universe = container
 executable = execute_eval.sh
 arguments = $(Process)
-output = train$(Cluster)_$(Process).out
-error = train$(Cluster)_$(Process).err
+output = logs/train$(Cluster)_$(Process).out
+error = logs/train$(Cluster)_$(Process).err
 environment = "WANDB_API_KEY=$(wandb_key) MODEL_PATH=$(model_path) CHECKPOINT=$(checkpoint) FEATURE_DIR=$(feature_out)"
 
 # Specify that HTCondor should transfer files to and from the
@@ -16,7 +16,7 @@ transfer_input_files = execute_eval.sh, /home/jgpeters3/FoundationModelBenchmark
 # Tell HTCondor what amount of compute resources 
 #  each job will need on the computer where it runs.
 # ( Machine == "jcaicedogpu0000.chtc.wisc.edu" || Machine == "jcaicedogpu0001.chtc.wisc.edu" || Machine == "jcaicedogpu0002.chtc.wisc.edu" || Machine == "coba2000.chtc.wisc.edu" )
-requirements = ( Machine == "jcaicedogpu0000.chtc.wisc.edu" || Machine == "jcaicedogpu0001.chtc.wisc.edu" || Machine == "jcaicedogpu0002.chtc.wisc.edu" || Machine == "coba2000.chtc.wisc.edu" )
+requirements = ( Machine == "jcaicedogpu0002.chtc.wisc.edu" || Machine == "coba2000.chtc.wisc.edu" )
 request_cpus = 12
 request_memory = 48GB
 request_disk =  96GB
