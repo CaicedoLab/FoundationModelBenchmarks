@@ -36,7 +36,7 @@ def main(
         
         score_df = pl.read_csv(score_file)
         scores = score_df['f1_score_macro'].to_list()
-        row_entry = [0, dataset, training_style, date, model_arch, model, 0, 0, 0, 0, 0, *scores, pipeline, 0, 0, model_type]
+        row_entry = [dataset, training_style, date, model_arch, model, 0, 0, 0, 0, 0, *scores, 0, pipeline, 0, model_type]
         output_tsv.append(row_entry)
         
     pl.from_records(output_tsv, orient="row").write_csv(file=output, include_header=False, separator='\t')

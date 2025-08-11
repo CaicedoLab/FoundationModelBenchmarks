@@ -7,7 +7,7 @@ import umap
 import matplotlib.pyplot as plt
 import seaborn as sb
 
-import utils as utils
+import morphem.models.utils as utils
 
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import f1_score, classification_report
