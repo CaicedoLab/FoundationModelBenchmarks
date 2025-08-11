@@ -22,7 +22,7 @@ import random
 import torch
 import torch.nn as nn
 
-from morphem.models.utils import trunc_normal_
+from models.utils import trunc_normal_
 
 
 def drop_path(x, drop_prob: float = 0., training: bool = False):

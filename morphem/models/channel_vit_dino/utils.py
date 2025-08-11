@@ -1,161 +1,3 @@
-import numpy as np
-import faiss
-from torch import nn
-import torch
-
-class SaturationNoiseInjector(nn.Module):
-    def __init__(self, low=200, high=255):
-        """
-        Initialize the SaturationNoiseInjector module.
-
-        Parameters:
-            low (int): Lower bound for uniform noise values.
-            high (int): Upper bound for uniform noise values.
-        """
-        super().__init__()
-        self.low = low
-        self.high = high
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Apply high-intensity noise injection to saturated pixels in a single-channel image.
-        The function expects the input tensor to have the shape (1, H, W) with pixel intensities in the 0-255 range.
-
-        Process:
-          - Convert the input tensor to float32.
-          - Generate noise drawn uniformly from [low, high] for each pixel.
-          - Create a mask for saturated pixels (where the pixel value equals 255).
-          - Zero-out saturated pixels and add the masked noise.
-
-        Parameters:
-            x (torch.Tensor): Input tensor of shape (1, H, W).
-
-        Returns:
-            torch.Tensor: The processed tensor with noise injected.
-        """
-        # Ensure input is in floating point for correct arithmetic
-        # Since x has one channel, extract the channel as a 2D tensor (H, W)
-        channel = x[0]
-
-        # Generate noise with values uniformly drawn between self.low and self.high
-        noise = torch.empty_like(channel).uniform_(self.low, self.high)
-
-        # Create a mask of pixels that are saturated (value == 255)
-        mask = (channel == 255).float()
-
-        # Apply the mask to the noise to affect only the saturated pixels
-        noise_masked = noise * mask
-
-        # Remove the saturated pixels by setting them to zero
-        channel[channel == 255] = 0
-
-        # Add the masked noise to the channel
-        channel = channel + noise_masked
-
-        # Update the tensor with the modified channel
-        x[0] = channel
-
-        return x
-
-
-class PerImageNormalize(nn.Module):
-    def __init__(self, eps=1e-7):
-        super().__init__()
-        # We initialize with num_features=1, but we’ll replace it on-the-fly if needed.
-        self.eps = eps
-        self.instance_norm = nn.InstanceNorm2d(
-            num_features=1,  # Temporary placeholder
-            affine=False,  # No learnable parameters
-            track_running_stats=False,  # Use per-forward stats (no running mean)
-            eps=self.eps,
-        )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        x shape: (N, C, H, W)
-        We'll ensure that our instance_norm has the correct number of channels (C).
-        """
-        # If your input has a dynamic channel size, we need to re-initialize:
-        C, _, _ = x.shape
-        if self.instance_norm.num_features != C:
-            self.instance_norm = nn.InstanceNorm2d(
-                num_features=C, affine=False, track_running_stats=False, eps=self.eps
-            )
-
-        # Now we can pass x through our InstanceNorm2d layer
-        return self.instance_norm(x)
-
-def create_pad(images, patch_width, patch_height):  # new method for vit model
-    N, C, H, W = images.shape
-
-    new_width = ((W + patch_width - 1) // patch_width) * patch_width
-    pad_width = new_width - W
-
-    # Calculate padding amounts for left and right
-    pad_left = pad_right = pad_width // 2
-
-    if pad_width % 2 != 0:
-        pad_right += 1
-
-    new_height = ((H + patch_height - 1) // patch_height) * patch_height
-    pad_height = new_height - H
-
-    # Calculate padding amounts for top and bottom
-    pad_top = pad_bottom = pad_height // 2
-
-    if pad_height % 2 != 0:
-        pad_bottom += 1
-
-    padded_images = F.pad(
-        images, (pad_left, pad_right, pad_top, pad_bottom), mode="constant", value=0
-    )
-
-    return padded_images
-
-
-########################################################
-## KNN Classifier
-########################################################
-
-class FaissKNeighbors:
-    def __init__(self, k, use_gpu: bool, metric: str):
-        """
-        @param k: number of neighbors
-        @param use_gpu: True to use GPU, False to use CPU
-        @param metric: "l2", "cosine"
-        """
-        self.index = None
-        self.y = None
-        self.k = k
-        self.gpu = faiss.StandardGpuResources() if use_gpu else None
-        self.metric = metric
-        assert metric in ['l2', 'cosine'], f"{metric} is not a valid metric. Choose from ['l2', 'cosine']"
-
-    def fit(self, X, y):
-        if self.metric == 'cosine':
-            # L2-normalize the vectors before computing dot product
-            X = X / np.linalg.norm(X, axis=-1, keepdims=True)
-            if self.gpu:
-                self.index = faiss.GpuIndexFlatIP(self.gpu, X.shape[1])
-            else:
-                self.index = faiss.IndexFlatIP(X.shape[1])
-        else:  ## "l2"
-            if self.gpu:
-                self.index = faiss.GpuIndexFlatL2(self.gpu, X.shape[1])
-            else:
-                self.index = faiss.IndexFlatL2(X.shape[1])
-        self.index.add(X.astype(np.float32))
-        self.y = y
-
-    def predict(self, X_test):
-        if self.metric == 'cosine':
-            # L2-normalize the vectors before computing dot product
-            X_test = X_test / np.linalg.norm(X_test, axis=-1, keepdims=True)
-
-        distances, indices = self.index.search(X_test.astype(np.float32), k=self.k)
-        votes = self.y[indices]
-        predictions = np.array([np.argmax(np.bincount(x)) for x in votes])
-        return predictions
 # Copyright (c) Facebook, Inc. and its affiliates.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -767,7 +609,7 @@ class MultiCropWrapper(nn.Module):
         self.backbone = backbone
         self.head = head
 
-    def forward(self, x):
+    def forward(self, x, extra_tokens = {}):
         # convert to list
         if not isinstance(x, list):
             x = [x]
@@ -777,7 +619,7 @@ class MultiCropWrapper(nn.Module):
         )[1], 0)
         start_idx, output = 0, torch.empty(0).to(x[0].device)
         for end_idx in idx_crops:
-            _out = self.backbone(torch.cat(x[start_idx: end_idx]))
+            _out = self.backbone(torch.cat(x[start_idx: end_idx]), extra_tokens)
             # The output is a tuple with XCiT model. See:
             # https://github.com/facebookresearch/xcit/blob/master/xcit.py#L404-L405
             if isinstance(_out, tuple):

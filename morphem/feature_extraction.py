@@ -1,5 +1,5 @@
 import sys
-sys.path.append('./morphem/FoundationModels/dinov2/') # for internal import of dinov2 modules to work
+sys.path.append('./FoundationModels/dinov2/') # for internal import of dinov2 modules to work
 
 import torch
 from torch.utils.data import DataLoader
@@ -10,10 +10,11 @@ import argparse
 import torch
 import os
 
+from models.models import *
 from utils import *
-from models.wrappers import *
+from models.utils import SaturationNoiseInjector, PerImageNormalize
 
-def get_save_features(
+def main(
     feature_dir, 
     root_dir, 
     model_path, 
@@ -27,13 +28,10 @@ def get_save_features(
     device = torch.device(f"cuda:{gpu}" if torch.cuda.is_available() else "cpu")
 
     model = get_model(model_path, model_check, model_size, device)
-
     for dataset_name in dataset_names:
-        # Post crops and processing getting the transforms
         transform = transforms.Compose([SaturationNoiseInjector(), PerImageNormalize()])
         dataset = configure_dataset(root_dir, dataset_name, transform=transform)
         train_dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
-
         total_steps = len(train_dataloader)
         all_feat = []
         for index, (images, label) in tqdm(enumerate(train_dataloader), total=total_steps):
@@ -60,11 +58,12 @@ def get_model(model_path, model_check, model_size, device):
         return MAEModel(model_path, model_size, device)
     elif model_check == 'dinov1':
         return ViTClass(model_path, model_size, device)
+    elif model_check == 'channelvit':
+        return ChannelVIT(model_path, model_size, device)
     else:
         raise NotImplementedError(f"Given {model_check} has not been implemented yet. Implement it for evaluation")
 
 def get_parser():
-
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--root-dir",
@@ -83,7 +82,7 @@ def get_parser():
         type=str,
         help="The type of model that is being trained and evaluated (convnext, resnet, or vit)",
         required=True,
-        choices=["mae", "resnet", "dinov1", "dinov2"],
+        choices=["mae", "resnet", "dinov1", "dinov2", 'channelvit'],
     )
     parser.add_argument(
         "--model-size",
@@ -131,7 +130,7 @@ if __name__ == "__main__":
     feat_dir = path_expansion(args.feat_dir)
     model_path = path_expansion(args.model_path)
     
-    get_save_features(
+    main(
         feat_dir,
         root_dir,
         model_path,
