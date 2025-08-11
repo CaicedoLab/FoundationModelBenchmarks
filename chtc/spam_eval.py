@@ -31,6 +31,9 @@ def main(dry_run: bool):
     for (model, checkpoint) in checkpoints_to_eval:   
         wandb_key =  os.environ.get('WANDB_API_KEY')
         
+        if 'ngram' in model:
+            continue
+        
         output_dir = os.path.join(FEATURES_ROOT, model, checkpoint)
         if dry_run:
             print(model, checkpoint)
