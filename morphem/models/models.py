@@ -5,6 +5,7 @@ from models.models_mae import mae_vit_base_patch16, mae_vit_small_patch16
 from models.utils import create_pad
 import numpy as np
 import os
+import json
 from omegaconf import OmegaConf
 
 from FoundationModels.dinov2 import dinov2 as dinov2
@@ -12,7 +13,7 @@ from FoundationModels.dinov2.dinov2.configs.config import Dinov2Config
 from FoundationModels.dinov2.dinov2.models import build_model_from_cfg
 from FoundationModels.dinov2.dinov2.utils.utils import load_pretrained_weights
 
-import models.channel_vit_dino.vit as channelvit 
+import models.channel_vit_dino.vision_transformer as channelvit 
 
 class DinoV2Models(torch.nn.Module):
     def __init__(self, model_path, checkpoint, device):
@@ -164,12 +165,18 @@ class MAEModel:
 class ChannelVIT:
     def __init__(self, model_path, model_size, device):
         self.device = device
+        self.dataset_channels = None # will be a list 
+        
+        with open(os.path.join(os.path.dirname(model_path), 'channel_map.json'), 'r') as f:
+            channel_map_file = f.read()
+        self.channel_map = json.loads(channel_map_file)
+
         self.feature_file = "pretrained_vit_features.npy"
         # Create model with in_chans=1 to match training setup
         if model_size == "base":
-            self.model = channelvit.vit_base()
+            self.model = channelvit.channelvit_base(in_chans=len(self.channel_map))
         elif model_size == "small":
-            self.model = channelvit.vit_small()
+            self.model = channelvit.channelvit_small(in_chans=len(self.channel_map))
         else:
             raise ValueError(
                 f"Models of base and small are supported, not {model_size}"
@@ -194,5 +201,20 @@ class ChannelVIT:
         self.model.eval()
         self.model.to(self.device)
     
+    def set_dataset(self, dataset_name):
+        if dataset_name == "Allen":
+            self.dataset_channels = ['allen_0', 'allen_1', 'allen_2']
+        elif dataset_name == "CP":
+            self.dataset_channels = ['cp_0', 'cp_1', 'cp_2', 'cp_3', 'cp_4']
+        elif dataset_name == "HPA":
+            self.dataset_channels = ['hpa_0', 'hpa_1', 'hpa_2', 'hpa_3']
+        else:
+            raise ValueError("Dataset name supplied is not supported. This class only supports CHAMMIv1 benchmarking.")
+    
     def __call__(self, images):
-        return None
+        extra_tokens = {
+                    "channels": [self.channel_map[chan] for chan in self.dataset_channels]
+            }
+        with torch.no_grad():
+            images = images.to(self.device)
+            return self.model(images, extra_tokens=extra_tokens).cpu().detach().numpy()

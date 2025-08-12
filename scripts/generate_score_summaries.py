@@ -22,8 +22,8 @@ def main(
     
     score_files = []
     for root, dirs, files in os.walk(input_directory):
-        if 'final_model' in root and 'logged' not in root:
-            score_files.append(os.path.join(root, 'knn_l2_full_results.csv'))
+        # if 'final_model' in root and 'logged' not in root:
+        score_files.append(os.path.join(root, 'knn_l2_full_results.csv'))
     
     date = datetime.now().strftime("%#m/%#d/%Y")
     

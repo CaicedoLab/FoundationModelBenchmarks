@@ -6,13 +6,13 @@ from functools import partial
 import argparse
 from collections import defaultdict
 
-# SCORES_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_scores'
-# FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
-# ROOT_DIR = '/scr/data/CHAMMI/dataset'
+SCORES_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_scores'
+FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
+ROOT_DIR = '/scr/data/CHAMMI/dataset'
 
-SCORES_ROOT = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/chammi_scores'
-FEATURES_ROOT    = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
-ROOT_DIR = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/chammi_metadata'
+# SCORES_ROOT = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/chammi_scores'
+# FEATURES_ROOT    = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
+# ROOT_DIR = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/chammi_metadata'
 
 def main(dry_run: bool, log_off: bool):
     evaled_models = os.listdir(FEATURES_ROOT)
@@ -44,10 +44,10 @@ def main(dry_run: bool, log_off: bool):
         
     for model in to_eval_score:
         checkpoints = to_eval_score[model]
-        has_final_checkpoint = False
-        for check in checkpoints:
-            if 'final_model' in check['dest']:
-                has_final_checkpoint = True
+        has_final_checkpoint = True
+        # for check in checkpoints:
+        #     if 'final_model' in check['dest']:
+        #         has_final_checkpoint = True
         if has_final_checkpoint:
             if dry_run:
                     print(model)

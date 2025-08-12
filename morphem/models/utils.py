@@ -2,6 +2,7 @@ import numpy as np
 import faiss
 from torch import nn
 import torch
+import torch.nn.functional as F
 
 class SaturationNoiseInjector(nn.Module):
     def __init__(self, low=200, high=255):

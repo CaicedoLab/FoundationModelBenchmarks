@@ -29,6 +29,8 @@ def main(
 
     model = get_model(model_path, model_check, model_size, device)
     for dataset_name in dataset_names:
+        if isinstance(model, ChannelVIT):
+            model.set_dataset(dataset_name)
         transform = transforms.Compose([SaturationNoiseInjector(), PerImageNormalize()])
         dataset = configure_dataset(root_dir, dataset_name, transform=transform)
         train_dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)

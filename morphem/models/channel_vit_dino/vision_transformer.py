@@ -19,8 +19,8 @@ import torch
 import torch.distributed as dist
 import torch.nn as nn
 
-from vit import Block
-from optim import trunc_normal_
+from .vit import Block
+from .optim import trunc_normal_
 
 
 class PatchEmbedPerChannel(nn.Module):
