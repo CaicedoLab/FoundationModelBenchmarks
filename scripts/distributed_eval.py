@@ -13,7 +13,7 @@ def eval_checkpoint(q: Queue, model_check):
     print(f"Evaluating {model} at checkpoint {checkpoint} with GPU: {gpu}")
     #condor_submit wandb_key={os.environ.get('WANDB_API_KEY')} model={os.path.join(CHECKPOINTS_ROOT, model)} checkpoint={checkpoint} output={os.path.join(FEATURES_ROOT, model, checkpoint)} condor_eval.sh
     result = subprocess.run(
-                f"python morphem/feature_extraction.py --root-dir /scr/data/CHAMMI/dataset/ --feat-dir {os.path.join(FEATURES_ROOT, model, checkpoint)} --model dinov2 --model-size small --model-path {os.path.join(CHECKPOINTS_ROOT, model)} --gpu {gpu} --batch-size 128 --checkpoint {checkpoint} ",
+                f"python extract --root-dir /scr/data/CHAMMI/dataset/ --feat-dir {os.path.join(FEATURES_ROOT, model, checkpoint)} --model dinov2 --model-size small --model-path {os.path.join(CHECKPOINTS_ROOT, model)} --gpu {gpu} --batch-size 128 --checkpoint {checkpoint} ",
                 shell=True,
                 capture_output=True,
                 check=True,

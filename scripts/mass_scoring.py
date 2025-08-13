@@ -54,7 +54,7 @@ def main(dry_run: bool, log_off: bool):
             else:
                 checkpoints = sorted(checkpoints, key=lambda x: int(x['check']))
                 for check in checkpoints:
-                    script = f"python morphem/benchmark.py --root-dir {ROOT_DIR} --dest-dir {check['dest']} --feature-dir {check['feat']} --feature-file pretrained_dinov2_vit_features.npy"                
+                    script = f"score --root-dir {ROOT_DIR} --dest-dir {check['dest']} --feature-dir {check['feat']} --feature-file pretrained_dinov2_vit_features.npy"                
                     result = subprocess.run(
                         script,
                         shell=True,

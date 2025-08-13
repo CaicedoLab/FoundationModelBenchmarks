@@ -25,6 +25,9 @@ wandb = ">=0.20.1, <0.21"
 polars = ">=1.31.0, <2"
 eza = ">=0.23.0,<0.24"
 
+[pypi-dependencies]
+"CHAMMI" = { path = ".", editable = true }
+
 [feature.score.dependencies]
 faiss-gpu = "1.7.2.*"
 matplotlib = ">=3.10.3,<4"
@@ -42,9 +45,6 @@ ipykernel = "*"
 faiss-cpu = "*"
 timm = ">=1.0.15,<2"
 omegaconf = ">=2.3.0,<3"
-
-[feature.extract.pypi-dependencies]
-"CHAMMI" = { path = ".", editable = true }
 
 [feature.submit.pypi-dependencies]
 argparse = ">=1.4.0, <2"
