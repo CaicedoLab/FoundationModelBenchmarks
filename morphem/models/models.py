@@ -8,10 +8,9 @@ import os
 import json
 from omegaconf import OmegaConf
 
-from FoundationModels.dinov2 import dinov2 as dinov2
-from FoundationModels.dinov2.dinov2.configs.config import Dinov2Config
-from FoundationModels.dinov2.dinov2.models import build_model_from_cfg
-from FoundationModels.dinov2.dinov2.utils.utils import load_pretrained_weights
+from models.dinov2.dinov2.configs.config import Dinov2Config
+from models.dinov2.dinov2.models import build_model_from_cfg
+from models.dinov2.dinov2.utils.utils import load_pretrained_weights
 
 import models.channel_vit_dino.vision_transformer as channelvit 
 

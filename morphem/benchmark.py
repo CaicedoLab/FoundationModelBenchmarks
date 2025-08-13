@@ -95,11 +95,11 @@ def run_benchmark(root_dir, dest_dir, feature_dir, feature_file, classifier='knn
         
     return full_result_df
 
-def main(root_dir, dest_dir, feature_dir, feature_file, classifier, umap, use_gpu, knn_metric):
+def main():
+    root_dir, dest_dir, feature_dir, feature_file, classifier, umap, use_gpu, knn_metric = get_args()
     run_benchmark(root_dir, dest_dir, feature_dir, feature_file, classifier, umap, use_gpu, knn_metric)
     
-
-if __name__ == "__main__":
+def get_args():
     parser = argparse.ArgumentParser(description="Benchmark Args")
     parser.add_argument('--root-dir', type=str,
                         help='The root directory for data processing.')
@@ -120,12 +120,8 @@ if __name__ == "__main__":
                         help='The metric to use for KNN classification. Default: %(default)s')
 
     args = parser.parse_args()
+    return args.root_dir, args.dest_dir, args.feature_dir, args.feature_file, args.classifier, args.umap, args.use_gpu, args.knn_metric
 
-    main(root_dir=args.root_dir,
-         dest_dir=args.dest_dir,
-         feature_dir=args.feature_dir,
-         feature_file=args.feature_file,
-         classifier=args.classifier,
-         umap=args.umap,
-         use_gpu=args.use_gpu,
-         knn_metric=args.knn_metric)
+
+if __name__ == "__main__":
+    main()

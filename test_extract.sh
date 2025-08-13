@@ -1,0 +1,1 @@
+extract --root-dir /scr/data/CHAMMI/dataset/ --feat-dir ./temp_feats --model channelvit --model-size small --model-path /scr/data/channel_vit_models/chammi_vit_testing/checkpoint.pth --gpu 0,1,2 --batch-size 32

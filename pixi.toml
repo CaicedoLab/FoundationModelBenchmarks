@@ -5,25 +5,10 @@ name = "chammi"
 platforms = ["linux-64"]
 version = "0.1.0"
 
-[feature.extract.tasks.extract]
-args = ["name", { arg='gpu', default='0'} ]
-cmd = "python morphem/feature_extraction.py --root-dir /scr/data/CHAMMI/dataset/ --feat-dir /scr/jpeters/chammi_eval/{{ name }} --model dinov2 --model-size base --model-path /mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/dino_artifacts/{{ name }} --gpu {{ gpu }} --batch-size 128" 
-
-[feature.score.tasks.score]
-args = ["name"]
-cmd = "python morphem/benchmark.py --root-dir /scr/data/CHAMMI/dataset --dest-dir /mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_scores/{{ name }} --feature-dir /scr/jpeters/chammi_eval/{{ name }} --feature-file pretrained_dinov2_vit_features.npy" 
-
 [environments]
 score = ["score"]
 submit = ["submit"]
 extract = ["extract"]
-
-[tasks.eval]
-args = ["name", { arg='gpu', default='0'}]
-depends-on = [
-  { task = "extract", environment = "extract", args=["{{ name }}", "{{ gpu }}"]},
-  { task = "score", environment = "score", args=["{{ name }}"]},
-]
 
 [feature.extract.system-requirements]
 cuda = "12.4"
@@ -38,6 +23,7 @@ numpy = ">=1.20.0,<2"
 pyzmq = ">=27.0.0, <28"
 wandb = ">=0.20.1, <0.21"
 polars = ">=1.31.0, <2"
+eza = ">=0.23.0,<0.24"
 
 [feature.score.dependencies]
 faiss-gpu = "1.7.2.*"
@@ -45,7 +31,6 @@ matplotlib = ">=3.10.3,<4"
 umap-learn = ">=0.5.7,<0.6"
 seaborn = ">=0.13.2,<0.14"
 wandb = ">=0.20.1,<0.21"
-
 
 [feature.extract.dependencies]
 cellpose = "3.0.11.*"
@@ -57,6 +42,9 @@ ipykernel = "*"
 faiss-cpu = "*"
 timm = ">=1.0.15,<2"
 omegaconf = ">=2.3.0,<3"
+
+[feature.extract.pypi-dependencies]
+"CHAMMI" = { path = ".", editable = true }
 
 [feature.submit.pypi-dependencies]
 argparse = ">=1.4.0, <2"

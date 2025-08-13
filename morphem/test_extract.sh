@@ -1,1 +1,0 @@
-python feature_extraction.py --root-dir /scr/data/CHAMMI/dataset/ --feat-dir ./temp_feats --model channelvit --model-size small --model-path /scr/data/channel_vit_models/chammi_vit_testing/checkpoint.pth --gpu 0 --batch-size 32
