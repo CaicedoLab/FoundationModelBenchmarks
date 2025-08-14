@@ -202,11 +202,11 @@ class ChannelVIT:
     
     def set_dataset(self, dataset_name):
         if dataset_name == "Allen":
-            self.dataset_channels = ['allen_0', 'allen_1', 'allen_2']
+            self.dataset_channels = ['nucleus', 'membrane', 'protein']
         elif dataset_name == "CP":
-            self.dataset_channels = ['cp_0', 'cp_1', 'cp_2', 'cp_3', 'cp_4']
+            self.dataset_channels = ['nucleus', 'cp2', 'er', 'cp4', 'cp5']
         elif dataset_name == "HPA":
-            self.dataset_channels = ['hpa_0', 'hpa_1', 'hpa_2', 'hpa_3']
+            self.dataset_channels = ['microtubules', 'protein', 'nucleus', 'er']
         else:
             raise ValueError("Dataset name supplied is not supported. This class only supports CHAMMIv1 benchmarking.")
     

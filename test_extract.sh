@@ -1,1 +1,1 @@
-extract --root-dir /scr/data/CHAMMI/dataset/ --feat-dir ./temp_feats --model channelvit --model-size small --model-path /scr/data/channel_vit_models/chammi_vit_testing/checkpoint.pth --gpu 0,1,2 --batch-size 32
+extract --root-dir /scr/data/CHAMMI/dataset/ --feat-dir /mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/features/ee8a769_baseline --model channelvit --model-size small --model-path /mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/models/ee8a769_baseline/checkpoint.pth --gpu 0,1,2 --batch-size 32
