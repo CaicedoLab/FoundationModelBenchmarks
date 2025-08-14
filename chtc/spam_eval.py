@@ -9,8 +9,12 @@ import argparse
 # CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/kept_checkpoints'
 # FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
 
-CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/models'
-FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/features'
+# CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/models'
+# FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/features'
+
+CHECKPOINTS_ROOT = '/hdd/jcaicedo/projects/channel_vit_dinov1/models'
+FEATURES_ROOT    = '/hdd/jcaicedo/projects//channel_vit_dinov1/features'
+
 
 def get_dinov2_checkpoints(models: list, evaled_models: list):
     checkpoints_to_eval = []
@@ -27,6 +31,7 @@ def get_dinov2_checkpoints(models: list, evaled_models: list):
             checkpoints_to_eval.extend([(model, checkpoint) for checkpoint in non_eval_checkpoints])
         else:
             checkpoints_to_eval.extend([(model, checkpoint) for checkpoint in checkpoints])
+    return checkpoints_to_eval
 
 def get_channelvit_checkpoints(models: list, evaled_models: list):
     checkpoints_to_eval = []
@@ -59,7 +64,7 @@ def main(dry_run: bool, model_type: str, model_size: str, gpus: str, features: s
         if dry_run:
             print(model, checkpoint)
         else:
-            submit_cmd = f"condor_submit wandb_key={wandb_key} model_type={model_type} model_size={model_size} gpus={gpus} model_path={os.path.join(checkpoints, model)} checkpoint={checkpoint} feature_out={output_dir} condor_eval.sh"
+            submit_cmd = f"condor_submit wandb_key={wandb_key} model_type={model_type} model_size={model_size} gpus={gpus} model_path={os.path.join(checkpoints, model)} checkpoint={checkpoint} feature_out={output_dir} req_gpu={len(gpus.split(','))} condor_eval.sh"
             
             result = subprocess.run(
                         submit_cmd,

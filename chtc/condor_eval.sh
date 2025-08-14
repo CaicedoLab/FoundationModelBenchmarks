@@ -20,7 +20,7 @@ requirements = ( Machine == "jcaicedogpu0002.chtc.wisc.edu" || Machine == "coba2
 request_cpus = 12
 request_memory = 48GB
 request_disk =  96GB
-request_gpus = 1
+request_gpus = $(req_gpu)
 # +is_resumable = true
 queue 1
 
