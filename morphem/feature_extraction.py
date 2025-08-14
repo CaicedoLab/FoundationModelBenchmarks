@@ -23,13 +23,14 @@ class ExtractionData:
     feature_dir: str
     root_dir: str
     batch_size: int
+    checkpoint: str
     
 def process_dataset(gpu_queue:Queue, data: ExtractionData):
     gpu = gpu_queue.get()
 
     device = torch.device(f"cuda:{gpu}" if torch.cuda.is_available() else "cpu")
 
-    model = get_model(data.model_path, data.model_check, data.model_size, device)
+    model = get_model(data.model_path, data.model_check, data.model_size, data.checkpoint, device)
     
     if isinstance(model, ChannelVIT):
         model.set_dataset(data.dataset_name)
@@ -59,7 +60,7 @@ def process_dataset(gpu_queue:Queue, data: ExtractionData):
 
 
 def main():
-    feature_dir, root_dir, model_path, model_check, model_size, gpu, batch_size = parse_args()
+    feature_dir, root_dir, model_path, model_check, model_size, gpu, batch_size, checkpoint = parse_args()
         
     dataset_names = ["Allen", "CP", "HPA"]
 
@@ -73,7 +74,8 @@ def main():
             model_check=model_check,
             model_size=model_size,
             batch_size=batch_size,
-            dataset_name=dataset
+            dataset_name=dataset,
+            checkpoint=checkpoint
         )
 
         extraction_data.append(dataset_data)
@@ -97,9 +99,9 @@ def main():
             p.close()
             p.join()
         
-def get_model(model_path, model_check, model_size, device):
+def get_model(model_path, model_check, model_size, checkpoint, device):
     if model_check == 'dinov2':
-        return DinoV2Models()
+        return DinoV2Models(model_path, checkpoint, device)
     elif model_check == "mae":
         return MAEModel(model_path, model_size, device)
     elif model_check == 'dinov1':
@@ -117,7 +119,7 @@ def parse_args():
     feat_dir = path_expansion(args.feat_dir)
     model_path = path_expansion(args.model_path)
     
-    return feat_dir, root_dir, model_path, args.model, args.model_size, args.gpu.split(','), args.batch_size
+    return feat_dir, root_dir, model_path, args.model, args.model_size, args.gpu.split(','), args.batch_size, args.checkpoint
 
 def get_parser():
     parser = argparse.ArgumentParser()
