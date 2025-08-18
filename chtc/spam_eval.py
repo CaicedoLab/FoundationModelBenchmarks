@@ -60,11 +60,15 @@ def main(dry_run: bool, model_type: str, model_size: str, gpus: str, features: s
         if 'ngram' in model:
             continue
         
+        model_path = os.path.join(checkpoints, model)
         output_dir = os.path.join(features, model, checkpoint)
         if dry_run:
             print(model, checkpoint)
         else:
-            submit_cmd = f"condor_submit wandb_key={wandb_key} model_type={model_type} model_size={model_size} gpus={gpus} model_path={os.path.join(checkpoints, model)} checkpoint={checkpoint} feature_out={output_dir} req_gpu={len(gpus.split(','))} condor_eval.sh"
+            if model_type == 'channelvit':
+                model_path = checkpoint
+                
+            submit_cmd = f"condor_submit wandb_key={wandb_key} model_type={model_type} model_size={model_size} gpus={gpus} model_path={model_path} checkpoint={checkpoint} feature_out={output_dir} req_gpu={len(gpus.split(','))} condor_eval.sh"
             
             result = subprocess.run(
                         submit_cmd,
@@ -77,7 +81,7 @@ def main(dry_run: bool, model_type: str, model_size: str, gpus: str, features: s
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="My program")
     parser.add_argument("-d", "--dry-run", action="store_true", help="Perform a dry run without making actual changes")
-    parser.add_argument("-m", "--model-type", default='dinov2', help="Denote what model is to extract features with")
+    parser.add_argument("-m", "--model-type", default='dinov2', choices=['dinov1', 'channelvit'], help="Denote what model is to extract features with")
     parser.add_argument("-s", "--model-size", default='small', help="Denote what model size is to extract features with. Not all models need this")
     parser.add_argument("-g", "--gpus", default='0', help="Comme separated gpu numbers. Examples are 0,1,2 or 0, or 0,3 etc")
     parser.add_argument("-f", "--features", default=FEATURES_ROOT, help="Path to where the output features should be stored")
