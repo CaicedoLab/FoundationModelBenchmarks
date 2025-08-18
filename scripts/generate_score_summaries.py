@@ -21,15 +21,21 @@ def main(
         model_type = "student"
     
     score_files = []
+    model_names = []
     for root, dirs, files in os.walk(input_directory):
         # if 'final_model' in root and 'logged' not in root:
-        score_files.append(os.path.join(root, 'knn_l2_full_results.csv'))
+        if len(files) > 0:
+            model_names.append(os.path.basename(root))
+            score_files.append(os.path.join(root, 'knn_l2_full_results.csv'))
     
     date = datetime.now().strftime("%#m/%#d/%Y")
     
     output_tsv = []
-    for score_file in score_files: 
+    for score_file, model_name in zip(score_files, model_names): 
         model_arch = score_file.split('/')[-3]
+        if model == 'channelvit':
+            model_arch = model_name
+            
         if dry_run:
             print(model_arch)
             continue
@@ -52,7 +58,7 @@ if __name__ == "__main__":
                         help="File to output data to.", default='./scores.tsv')
     parser.add_argument("--dataset", default='CHAMMIv1', type=str, help="Specify the dataset to use.")
     parser.add_argument("--training-style", default='Self-Supervised', type=str, help="Specify the training style.")
-    parser.add_argument("--model", default='DINOV2', type=str, help="Specify the model to use.")
+    parser.add_argument('-m', "--model", default='DINOV2', type=str, help="Specify the model to use.")
     parser.add_argument("--pipeline", default='John', type=str, help="Specify the pipeline to use.")
     parser.add_argument("--is-student", action="store_true", help="Say it was a student eval.")
     
