@@ -22,7 +22,6 @@ import torch.nn as nn
 from .vit import Block
 from .optim import trunc_normal_
 
-
 class PatchEmbedPerChannel(nn.Module):
     """Image to Patch Embedding."""
 

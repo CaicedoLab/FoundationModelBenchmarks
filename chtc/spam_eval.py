@@ -9,11 +9,11 @@ import argparse
 # CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/kept_checkpoints'
 # FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
 
-# CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/models'
-# FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/features'
+CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/models'
+FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/features'
 
-CHECKPOINTS_ROOT = '/hdd/jcaicedo/projects/channel_vit_dinov1/models'
-FEATURES_ROOT    = '/hdd/jcaicedo/projects//channel_vit_dinov1/features'
+# CHECKPOINTS_ROOT = '/hdd/jcaicedo/projects/channel_vit_dinov1/models'
+# FEATURES_ROOT    = '/hdd/jcaicedo/projects//channel_vit_dinov1/features'
 
 
 def get_dinov2_checkpoints(models: list, evaled_models: list):
