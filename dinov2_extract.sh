@@ -1,0 +1,1 @@
+extract --root-dir /scr/data/CHAMMI/dataset/ --feat-dir /mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features/a63fc9b_ngram_2/ --model ngram --model-size small --model-path /mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/dino_artifacts/a63fc9b_ngram_2 --gpu 0,1,2 --batch-size 32

@@ -34,7 +34,7 @@ def process_dataset(gpu_queue:Queue, data: ExtractionData):
     
     if isinstance(model, ChannelVIT):
         model.set_dataset(data.dataset_name)
-    transform = transforms.Compose([SaturationNoiseInjector(), PerImageNormalize()])
+    transform = transforms.Compose([PerImageNormalize()])
     dataset = configure_dataset(data.root_dir, data.dataset_name, transform=transform)
     train_dataloader = DataLoader(dataset, batch_size=data.batch_size, shuffle=False)
 
@@ -100,8 +100,8 @@ def main():
             p.join()
         
 def get_model(model_path, model_check, model_size, checkpoint, device):
-    if model_check == 'dinov2':
-        return DinoV2Models(model_path, checkpoint, device)
+    if model_check == 'dinov2' or 'ngram':
+        return DinoV2Models(model_path, checkpoint, model_check, device)
     elif model_check == "mae":
         return MAEModel(model_path, model_size, device)
     elif model_check == 'dinov1':
@@ -140,7 +140,7 @@ def get_parser():
         type=str,
         help="The type of model that is being trained and evaluated (convnext, resnet, or vit)",
         required=True,
-        choices=["mae", "resnet", "dinov1", "dinov2", 'channelvit'],
+        choices=["mae", "resnet", "dinov1", "dinov2", 'channelvit', 'ngram'],
     )
     parser.add_argument(
         "--model-size",

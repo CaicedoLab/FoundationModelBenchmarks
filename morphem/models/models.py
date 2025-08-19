@@ -15,8 +15,13 @@ from models.dinov2.dinov2.utils.utils import load_pretrained_weights
 import models.channel_vit_dino.vision_transformer as channelvit 
 
 class DinoV2Models(torch.nn.Module):
-    def __init__(self, model_path, checkpoint, device):
+    def __init__(self, model_path, checkpoint, model_size, device):
         super().__init__()
+        
+        if model_size == 'ngram':
+            self.is_ngram = True
+        else:
+            self.is_ngram = False 
         
         self.device = device
         
@@ -32,9 +37,9 @@ class DinoV2Models(torch.nn.Module):
             latest_eval = max(check_iterations)
             checkpoint_path = os.path.join(eval_dir, f"training_{latest_eval}", "teacher_checkpoint.pth")
             
-            possible_final_check = ["final_model" in checkpoint_dir for checkpoint_dir in checkpoint_dirs]
-            if any(possible_final_check):
-                checkpoint_path = os.path.join(eval_dir, "final_model", "teacher_checkpoint.pth")
+            possible_final_check = list(filter(lambda x: "final_model" in x, checkpoint_dirs))#["final_model" in checkpoint_dir for checkpoint_dir in checkpoint_dirs]
+            if len(possible_final_check) > 0:
+                checkpoint_path = os.path.join(eval_dir, possible_final_check[0], "teacher_checkpoint.pth")
         else:
             has_checkpoint = any([checkpoint in checkpoint_dir for checkpoint_dir in checkpoint_dirs])
             if has_checkpoint:
@@ -48,15 +53,69 @@ class DinoV2Models(torch.nn.Module):
         with open(config_path, 'r') as f:
             cfg = OmegaConf.load(f)
         cfg = OmegaConf.merge(default_cfg, cfg)
-        dinov2_model, _ = build_model_from_cfg(cfg, only_teacher=True) # type: ignore
-        load_pretrained_weights(dinov2_model, checkpoint_path, 'teacher')
-        dinov2_model.eval()
-        dinov2_model.to(device)
+        self.model, _ = build_model_from_cfg(cfg, only_teacher=True) # type: ignore
+        load_pretrained_weights(self.model, checkpoint_path, 'teacher')
+        self.model.eval()
+        self.model.to(device)
         self.feature_file = "pretrained_dinov2_vit_features.npy"
 
-    def forward(self, samples):
-        # return nn.functional.normalize(self.model(samples), dim=1, p=2)
-        return self.model(samples)
+    def boc_ngram(self, samples: torch.Tensor):
+        entries = []
+        for ch_idx in range(samples.shape[1]):
+            entries.append((ch_idx, ch_idx))
+            
+        to_concat = []
+        for entry in entries:
+            ngram = torch.stack([samples[:,entry[0],:,:], samples[:,entry[1],:,:]], dim=1)
+            to_concat.append(self.model(ngram))
+        
+        return torch.concat(to_concat, dim=1)
+
+    def all_cat(self, samples: torch.Tensor):
+        entries = []
+        for ch_idx in range(samples.shape[1]):
+            for ch_idx2 in range(samples.shape[1]):
+                entries.append((ch_idx, ch_idx2))
+            
+        to_concat = []
+        for entry in entries:
+            ngram = torch.stack([samples[:,entry[0],:,:], samples[:,entry[1],:,:]], dim=1)
+            to_concat.append(self.model(ngram).cpu().detach())
+        
+        return torch.concat(to_concat, dim=1)
+
+    def average_of_diagonal(self, samples: torch.Tensor):
+        entries = set()
+        for ch_idx in range(samples.shape[1]):
+            for ch_idx2 in range(samples.shape[1]):
+                if (ch_idx2, ch_idx) in entries:
+                    continue
+                
+                entries.add((ch_idx, ch_idx2))
+        
+        to_concat = []
+        for entry in entries:
+            if entry[0] == entry[1]:
+                ngram = torch.stack([samples[:,entry[0],:,:], samples[:,entry[1],:,:]], dim=1)
+                to_concat.append(self.model(ngram).cpu().detach())
+            else:
+                ngram = torch.stack([samples[:,entry[0],:,:], samples[:,entry[1],:,:]], dim=1)
+                ngram_embed = self.model(ngram).cpu().detach()
+                
+                ngram_rev = torch.stack([samples[:,entry[1],:,:], samples[:,entry[0],:,:]], dim=1)
+                ngram_rev_embed = self.model(ngram_rev).cpu().detach()
+                
+                to_concat.append((ngram_embed + ngram_rev_embed)/2)
+        
+        return torch.concat(to_concat, dim=1)
+
+    def forward(self, samples: torch.Tensor):
+        # return nn.functional.normalize(self.model(samples), dim=1, p=2
+        samples = samples.to(self.device)
+        if not self.is_ngram:
+            return self.model(samples).cpu().detach().numpy()
+        else:
+            return self.average_of_diagonal(samples).cpu().detach().numpy()
 
 class ViTClass:
     def __init__(self, weights_path: str, model_size: str, device):

@@ -6,16 +6,16 @@ from functools import partial
 import argparse
 from collections import defaultdict
 
-# SCORES_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_scores'
-# FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
-# ROOT_DIR = '/scr/data/CHAMMI/dataset'
+SCORES_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_scores'
+FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
+ROOT_DIR = '/scr/data/CHAMMI/dataset'
 
 # CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/models'
 # FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/features'
 
-SCORES_ROOT = '/mnt/cephfs/mir/jcaicedo/projects//channel_vit_dinov1/scores'
-FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/features'
-ROOT_DIR = '/scr/data/CHAMMI/dataset'
+# SCORES_ROOT = '/mnt/cephfs/mir/jcaicedo/projects//channel_vit_dinov1/scores'
+# FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/features'
+# ROOT_DIR = '/scr/data/CHAMMI/dataset'
 
 # SCORES_ROOT = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/chammi_scores'
 # FEATURES_ROOT    = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
@@ -31,7 +31,7 @@ def get_dinov2_checkpoints(evaled_models: list):
         
         checkpoints:list[str] = os.listdir(os.path.join(FEATURES_ROOT, model))
         checkpoints = [tuple(checkpoint.rsplit('_', 1)) for checkpoint in checkpoints]
-        # print(checkpoints, model)
+
         checkpoints.sort(key=lambda x: int(x[-1]))
         for name, check in checkpoints:
             possible_score_path = os.path.join(SCORES_ROOT, model, f'{name}_{check}')
