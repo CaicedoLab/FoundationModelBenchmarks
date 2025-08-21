@@ -25,6 +25,8 @@ def main(
     for root, dirs, files in os.walk(input_directory):
         # if 'final_model' in root and 'logged' not in root:
         if len(files) > 0:
+            if 'logged' in root:
+                continue
             model_names.append(os.path.basename(root))
             score_files.append(os.path.join(root, 'knn_l2_full_results.csv'))
     

@@ -6,15 +6,15 @@ from functools import partial
 import argparse
 from collections import defaultdict
 
-SCORES_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_scores'
-FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
+# SCORES_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_scores'
+# FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
 ROOT_DIR = '/scr/data/CHAMMI/dataset'
 
 # CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/models'
 # FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/features'
 
-# SCORES_ROOT = '/mnt/cephfs/mir/jcaicedo/projects//channel_vit_dinov1/scores'
-# FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/features'
+SCORES_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/scores'
+FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/features'
 # ROOT_DIR = '/scr/data/CHAMMI/dataset'
 
 # SCORES_ROOT = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/chammi_scores'

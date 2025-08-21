@@ -63,6 +63,7 @@ def main():
     feature_dir, root_dir, model_path, model_check, model_size, gpu, batch_size, checkpoint = parse_args()
         
     dataset_names = ["Allen", "CP", "HPA"]
+    # dataset_names = ["Allen"]
 
     extraction_data = []
 
@@ -100,7 +101,7 @@ def main():
             p.join()
         
 def get_model(model_path, model_check, model_size, checkpoint, device):
-    if model_check == 'dinov2' or 'ngram':
+    if model_check == 'dinov2' or model_check == 'ngram':
         return DinoV2Models(model_path, checkpoint, model_check, device)
     elif model_check == "mae":
         return MAEModel(model_path, model_size, device)
