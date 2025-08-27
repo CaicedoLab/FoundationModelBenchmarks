@@ -4,60 +4,23 @@ from torch import nn
 import torch
 import torch.nn.functional as F
 
-class SaturationNoiseInjector(nn.Module):
-    def __init__(self, low=200, high=255):
-        """
-        Initialize the SaturationNoiseInjector module.
-
-        Parameters:
-            low (int): Lower bound for uniform noise values.
-            high (int): Upper bound for uniform noise values.
-        """
+class NoiseInjection(nn.Module):
+    def __init__(self, low=0.785, high=1.0):
         super().__init__()
         self.low = low
         self.high = high
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Apply high-intensity noise injection to saturated pixels in a single-channel image.
-        The function expects the input tensor to have the shape (1, H, W) with pixel intensities in the 0-255 range.
-
-        Process:
-          - Convert the input tensor to float32.
-          - Generate noise drawn uniformly from [low, high] for each pixel.
-          - Create a mask for saturated pixels (where the pixel value equals 255).
-          - Zero-out saturated pixels and add the masked noise.
-
-        Parameters:
-            x (torch.Tensor): Input tensor of shape (1, H, W).
-
-        Returns:
-            torch.Tensor: The processed tensor with noise injected.
-        """
-        # Ensure input is in floating point for correct arithmetic
-        # Since x has one channel, extract the channel as a 2D tensor (H, W)
-        channel = x[0]
-
-        # Generate noise with values uniformly drawn between self.low and self.high
-        noise = torch.empty_like(channel).uniform_(self.low, self.high)
-
-        # Create a mask of pixels that are saturated (value == 255)
-        mask = (channel == 255).float()
-
-        # Apply the mask to the noise to affect only the saturated pixels
-        noise_masked = noise * mask
-
-        # Remove the saturated pixels by setting them to zero
-        channel[channel == 255] = 0
-
-        # Add the masked noise to the channel
-        channel = channel + noise_masked
-
-        # Update the tensor with the modified channel
-        x[0] = channel
-
+        noise = torch.empty_like(x).uniform_(self.low, self.high)
+        return torch.where(x == 1.0, noise, x)
+    
+class self_normalize(object):
+    def __call__(self, x):
+        m = x.mean((-2, -1), keepdim=True)
+        s = x.std((-2, -1), unbiased=False, keepdim=True)
+        x -= m
+        x /= s + 1e-7
         return x
-
 
 class PerImageNormalize(nn.Module):
     def __init__(self, eps=1e-7):

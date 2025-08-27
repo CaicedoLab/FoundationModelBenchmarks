@@ -10,7 +10,7 @@ import os
 
 from models.models import *
 from utils import *
-from models.utils import SaturationNoiseInjector, PerImageNormalize
+from models.utils import NoiseInjection, self_normalize
 
 from dataclasses import dataclass
 
@@ -34,7 +34,7 @@ def process_dataset(gpu_queue:Queue, data: ExtractionData):
     
     if isinstance(model, ChannelVIT):
         model.set_dataset(data.dataset_name)
-    transform = transforms.Compose([PerImageNormalize()])
+    transform = transforms.Compose([transforms.ConvertImageDtype(torch.float32), NoiseInjection(), self_normalize()])
     dataset = configure_dataset(data.root_dir, data.dataset_name, transform=transform)
     train_dataloader = DataLoader(dataset, batch_size=data.batch_size, shuffle=False)
 

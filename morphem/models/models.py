@@ -70,6 +70,12 @@ class DinoV2Models(torch.nn.Module):
             to_concat.append(self.model(ngram))
         
         return torch.concat(to_concat, dim=1)
+    
+    def boc(self, samples: torch.Tensor):
+        to_concat = []
+        for ch_idx in range(samples.shape[1]):
+            to_concat.append(self.model(samples[:,ch_idx,:,:].unsqueeze(dim=1)))
+        return torch.concat(to_concat, dim=1)
 
     def all_cat(self, samples: torch.Tensor):
         entries = []
@@ -113,7 +119,7 @@ class DinoV2Models(torch.nn.Module):
         # return nn.functional.normalize(self.model(samples), dim=1, p=2
         samples = samples.to(self.device)
         if not self.is_ngram:
-            return self.model(samples).cpu().detach().numpy()
+            return self.boc(samples).cpu().detach().numpy()
         else:
             return self.average_of_diagonal(samples).cpu().detach().numpy()
 
