@@ -14,15 +14,15 @@ FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benc
 # CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/models'
 # FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/features'
 
-def eval_checkpoint(q: Queue, model_check, model):
+def eval_checkpoint(q: Queue, model_check, model_arch):
     model, checkpoint = model_check
     gpu = q.get()
     
     print(f"Evaluating {model} with GPU: {gpu}")
     
-    if model == 'dinov2':
+    if model_arch == 'dinov2':
         result = subprocess.run(
-                    f"extract --root-dir /scr/data/CHAMMI/dataset/ --feat-dir {os.path.join(FEATURES_ROOT, model)} --model dinov2 --model-size small --model-path {os.path.join(CHECKPOINTS_ROOT, model)} --gpu 0,1,2 --batch-size 32 --checkpoint {checkpoint} ",
+                    f"extract --root-dir /scr/data/CHAMMI/dataset/ --feat-dir {os.path.join(FEATURES_ROOT, model)} --model dinov2 --model-size small --model-path {os.path.join(CHECKPOINTS_ROOT, model)} --gpu {gpu} --batch-size 32 --checkpoint {checkpoint} ",
                     shell=True,
                     # capture_output=True,
                     check=True,
@@ -31,7 +31,7 @@ def eval_checkpoint(q: Queue, model_check, model):
     
     else:
         result = subprocess.run(
-                    f"extract --root-dir /scr/data/CHAMMI/dataset/ --feat-dir {os.path.join(FEATURES_ROOT, model)} --model channelvit --model-size small --model-path {checkpoint} --gpu 0,1,2 --batch-size 32 --checkpoint {checkpoint} ",
+                    f"extract --root-dir /scr/data/CHAMMI/dataset/ --feat-dir {os.path.join(FEATURES_ROOT, model)} --model channelvit --model-size small --model-path {checkpoint} --gpu {gpu} --batch-size 32 --checkpoint {checkpoint} ",
                     shell=True,
                     # capture_output=True,
                     check=True,
@@ -84,7 +84,7 @@ def main(dry_run: bool, model: str):
         list(map(print, checkpoints_to_eval))
         return
     
-    num_gpu = 7        
+    num_gpu = 1    
     with Manager() as manager:
         q = manager.Queue()
         

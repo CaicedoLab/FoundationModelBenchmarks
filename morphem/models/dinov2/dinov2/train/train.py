@@ -11,20 +11,15 @@ from functools import partial
 from fvcore.common.checkpoint import PeriodicCheckpointer
 import torch
 import torch.distributed
-import torch.utils
 from dinov2.data import SamplerType, make_data_loader, make_dataset
-from dinov2.data import collate_data_and_cast, DataAugmentationDINO, MaskingGenerator
-from dinov2.data.augmentations import DataAugmentationDINOCellPainting, DataAugmentationDINOJUMP
-# from dinov2.data.augmentations import DataAugmentationDINOCellPainting
+from dinov2.data import collate_data_and_cast, DataAugmentationDINO, MaskingGenerator, OriginalDataAugmentationDINO
 import dinov2.distributed as distributed
 from dinov2.fsdp import FSDPCheckpointer
 from dinov2.logging import MetricLogger
 from dinov2.utils.config import setup, write_config
 from dinov2.utils.utils import CosineScheduler
 from dinov2.train.ssl_meta_arch import SSLMetaArch
-import wandb
-import sys
-from dinov2.configs.config import Dinov2Config
+from dinov2.configs.config import Dinov2Config, Augmentation
 
 torch.backends.cuda.matmul.allow_tf32 = True  # PyTorch 1.12 sets this to False by default
 logger = logging.getLogger("dinov2")
@@ -313,16 +308,32 @@ def main(args):
     model = SSLMetaArch(cfg).to(torch.device("cuda"))
     model.prepare_for_distributed_training()
     
-    cfg.train.batch_size_per_gpu = round(cfg.train.total_batch_size/distributed.get_global_size())
+    if not cfg.train.total_batch_size:
+        assert cfg.train.batch_size_per_gpu, "Must give a batch size per gpu if not using total batch size"
+        cfg.train.total_batch_size = cfg.train.batch_size_per_gpu * distributed.get_global_size()
+    else:
+        cfg.train.batch_size_per_gpu = round(cfg.train.total_batch_size/distributed.get_global_size())
 
-    data_transform = DataAugmentationDINO(
-        cfg.crops.global_crops_scale,
-        cfg.crops.local_crops_scale,
-        cfg.crops.local_crops_number,
-        global_crops_size=cfg.crops.global_crops_size,
-        local_crops_size=cfg.crops.local_crops_size,
-    )
-    
+
+    if cfg.dino.augmentation == Augmentation.dino:    
+        data_transform = DataAugmentationDINO(
+            cfg.crops.global_crops_scale,
+            cfg.crops.local_crops_scale,
+            cfg.crops.local_crops_number,
+            global_crops_size=cfg.crops.global_crops_size,
+            local_crops_size=cfg.crops.local_crops_size,
+            inject_noise=cfg.train.inject_noise
+        )
+    else:
+        data_transform = OriginalDataAugmentationDINO(
+            cfg.crops.global_crops_scale,
+            cfg.crops.local_crops_scale,
+            cfg.crops.local_crops_number,
+            global_crops_size=cfg.crops.global_crops_size,
+            local_crops_size=cfg.crops.local_crops_size,
+            inject_noise=cfg.train.inject_noise
+        )
+        
     dataset = make_dataset(
         cfg=cfg,
         transform=data_transform,

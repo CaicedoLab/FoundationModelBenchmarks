@@ -72,7 +72,8 @@ class MetricLogger(object):
                 config=OmegaConf.to_container(config),
                 name=config['train']['name'],
                 id=config['train']['name'],
-                mode = mode
+                mode = mode,
+                resume = "allow"
             )
         
         i = start_iteration

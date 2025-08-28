@@ -378,6 +378,19 @@ def vit_small_single_channel(**kwargs):
     
     return model
 
+def vit_medium_single_channel(**kwargs):
+    model = DinoVisionTransformer(
+        embed_dim=512,
+        depth=12,
+        num_heads=8,
+        mlp_ratio=4,
+        block_fn=partial(Block, attn_class=MemEffAttention),
+        in_chans=1,
+        **kwargs,
+    )
+    
+    return model
+
 def vit_base_single_channel(**kwargs):
     model = DinoVisionTransformer(
         embed_dim=768,

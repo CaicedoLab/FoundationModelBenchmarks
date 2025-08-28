@@ -12,6 +12,7 @@ import math
 import warnings
 from torchvision import transforms
 from torchvision.transforms.functional import _interpolation_modes_from_int, InterpolationMode, get_dimensions
+from torch import nn
 
 
 class GaussianBlur(transforms.RandomApply):
@@ -454,3 +455,14 @@ class remove_channel(torch.nn.Module):
             return img
         else:
             return img
+        
+        
+class NoiseInjection(nn.Module):
+    def __init__(self, low=0.785, high=1.0):
+        super().__init__()
+        self.low = low
+        self.high = high
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        noise = torch.empty_like(x).uniform_(self.low, self.high)
+        return torch.where(x == 1.0, noise, x)

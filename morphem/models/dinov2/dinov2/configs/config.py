@@ -37,6 +37,10 @@ class ComputePrecisionConfig:
         ibot_head=ModulePrecision("SHARD_GRAD_OP", MixedPrecisionDetail("fp16", "fp32", "fp32")),
     ))
 
+class Augmentation(str, Enum):
+    dino = "dino"
+    original_dino = "original_dino"
+
 @dataclass
 class DinoConfig:
     loss_weight: float = 1.0
@@ -44,7 +48,8 @@ class DinoConfig:
     head_bottleneck_dim: int = 256
     head_nlayers: int = 3
     head_hidden_dim: int = 2048
-    koleo_loss_weight: float = 0.1
+    koleo_loss_weight: float = 0.01
+    augmentation: Augmentation = Augmentation.dino
 
 @dataclass
 class IbotConfig:
@@ -68,7 +73,7 @@ class WandbMode(str, Enum):
 @dataclass
 class TrainConfig:
     name: str = 'unnamed'
-    batch_size_per_gpu: Optional[int] = None # Autoset when total_batch_size is set.
+    batch_size_per_gpu: Optional[int] = 64 # Autoset when total_batch_size is set.
     # dataset_path alternatively supports ngram: when ngram is wanted.
     dataset_path: str =  "zip:dataset_root_dir=../chammi_train.zip" # zip:dataset_root_dir=/scr/data/CHAMMI/chammi_train.zip 
     split_fns: list[str] = field(default_factory=lambda: ["randomize", "get_proc_split", "split_for_workers"])
@@ -76,22 +81,23 @@ class TrainConfig:
     saveckp_freq: int = 20
     seed: int = 42
     num_workers: int = 10
-    OFFICIAL_EPOCH_LENGTH: int = 1250
+    OFFICIAL_EPOCH_LENGTH: int = 0 # gets set dynamically
     cache_dataset: bool = True
     centering: CenteringType = CenteringType.sinkhorn_knopp 
     wandb_mode: WandbMode = WandbMode.enabled
     sampler: str = "none" 
     dataset_size: Optional[int] = None # number of image in the dataset, leave null for autocomputation.
-    total_batch_size: Optional[int] = 512 # set to 0 and use batch_size_per_gpu
+    total_batch_size: Optional[int] = None # set to None and use batch_size_per_gpu if this it not wanted
     # ngram arguments. Used when dataset_path starts with ngram: instead of zip:.
     ngram_sample_rate: Optional[float] = None # 0.5. 
     dataset_config: Optional[str] = None # /scr/data/CHAMMI/multi_channel_chammi_metadata.csv 
-    
+    inject_noise: bool = False
 
 class Arch(str, Enum):
     vit_small_single_channel = "vit_small_single_channel" 
     vit_base_single_channel  = "vit_base_single_channel" 
     vit_small_ngram = "vit_small_ngram"
+    vit_medium_single_channel = "vit_medium_single_channel"
 
 @dataclass
 class StudentConfig:
@@ -106,7 +112,7 @@ class StudentConfig:
     qkv_bias: bool = True
     proj_bias: bool = True
     ffn_bias: bool = True
-    num_register_tokens: int = 0
+    num_register_tokens: int = 2
     interpolate_antialias: bool = False
     interpolate_offset: float = 0.1
 
@@ -126,7 +132,7 @@ class OptimConfig:
     epochs: int = 100
     weight_decay: float = 0.04
     weight_decay_end: float = 0.2
-    base_lr: float = 0.0002
+    base_lr: float = 0.002
     lr: float = 0.0 # auto-gen with respect to scaling_rule
     warmup_epochs: int = 10
     min_lr: float = 1.0e-06
@@ -143,7 +149,7 @@ class OptimConfig:
 @dataclass
 class CropsConfig:
     global_crops_scale: List[float] = field(default_factory=lambda: [0.32, 1.0])
-    local_crops_number: int = 8
+    local_crops_number: int = 4
     local_crops_scale: List[float] = field(default_factory=lambda: [0.05, 0.32])
     global_crops_size: int = 224
     local_crops_size: int = 96

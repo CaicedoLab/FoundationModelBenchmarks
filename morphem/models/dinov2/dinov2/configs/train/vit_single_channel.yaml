@@ -1,3 +1,8 @@
 train:
   wandb_mode: disabled
-  name: test_default_config_structure
+  name: test_drop_path
+  dataset_path: zip:dataset_root_dir=/scr/data/CHAMMI/chammi_train.zip
+  total_batch_size: 64
+student:
+  drop_path_rate: 0.1
+  arch: vit_medium_single_channel
