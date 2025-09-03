@@ -50,6 +50,13 @@ def run_benchmark(root_dir, dest_dir, feature_dir, feature_file, classifier='knn
         leaveout_label = row.leaveout_label
         umap_label     = row.umap_label
         
+        if '_allen' in feature_dir and dataset != "Allen":
+            continue
+        if '_hpa' in feature_dir and dataset != "HPA":
+            continue
+        if '_cp' in feature_dir and dataset != "CP":
+            continue
+        
         features_path  = f'{feature_dir}/{dataset}/{feature_file}'
         df_path        = f'{root_dir}/{dataset}/enriched_meta.csv'
         

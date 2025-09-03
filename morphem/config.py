@@ -22,8 +22,8 @@ class ModelConfig:
 class TemperatureConfig:
     """Temperature teacher parameters"""
     warmup_teacher_temp: float = 0.04
-    teacher_temp: float = 0.04
-    warmup_teacher_temp_epochs: int = 0
+    teacher_temp: float = 0.07
+    warmup_teacher_temp_epochs: int = 30
 
 @dataclass
 class OptimConfig:
@@ -32,7 +32,7 @@ class OptimConfig:
     weight_decay: float = 0.04
     weight_decay_end: float = 0.4
     clip_grad: float = 3.0
-    batch_size_per_gpu: int = 32
+    batch_size_per_gpu: int = 26
     epochs: int = 100
     freeze_last_layer: int = 1
     lr: float = 0.00005
@@ -56,27 +56,32 @@ class DatasetSize(str, Enum):
 class DatasetConfig:
     """Dataset parameters"""
     guided_crops_path: Optional[str] = None
-    dataset_size: DatasetSize = DatasetSize.large
     multiscale: bool = False
     guided_cropping: bool = False
     guided_crops_size: Tuple[int, int] = (256, 256)
     small_list_path: Optional[str] = None
     metadata: str = '../../multi_channel_chammi_metadata.csv'
+    dataset_filter: Optional[str] = None
+
+class WandbLog(str, Enum):
+    disabled = "disabled"
+    enabled = "None"
 
 @dataclass
 class TrainConfig:
     """Misc parameters"""
     name: str = ""
-    data_path: str = '../../chammi_train.zip'
+    data_path: str = '/scratch/chammi_train.zip'
     output_dir: str = "/hdd/jcaicedo/projects/channel_vit_dinov1/models"
     saveckp_freq: int = 20
     seed: int = 42
-    num_workers: int = 10
+    num_workers: int = 4
     dist_url: str = "env://"
     local_rank: int = 0
     world_size: int = 0
     gpu: int = 0
     rank: int = 0
+    wandb: WandbLog = WandbLog.enabled
 
 @dataclass
 class DINOV1Config:

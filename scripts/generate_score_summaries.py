@@ -44,6 +44,8 @@ def main(
         
         score_df = pl.read_csv(score_file)
         scores = score_df['f1_score_macro'].to_list()
+        if len(scores) != 9:
+            continue
         row_entry = [dataset, training_style, date, model_arch, model, 0, 0, 0, 0, 0, *scores, 0, pipeline, 0, model_type]
         output_tsv.append(row_entry)
         

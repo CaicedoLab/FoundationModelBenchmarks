@@ -10,6 +10,15 @@ score = ["score"]
 submit = ["submit"]
 extract = ["extract"]
 
+[feature.extract.tasks.extract]
+cmd = "python scripts/distributed_eval.py"
+
+[feature.score.tasks.score]
+cmd = "python scripts/mass_scoring.py -l"
+
+[feature.score.tasks.print]
+cmd = "python scripts/generate_score_summaries.py -i /mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/testing_scores"
+
 [feature.extract.system-requirements]
 cuda = "12.4"
 

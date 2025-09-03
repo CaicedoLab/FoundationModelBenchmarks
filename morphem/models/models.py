@@ -230,6 +230,7 @@ class ChannelVIT:
     def __init__(self, model_path, model_size, device):
         self.device = device
         self.dataset_channels = None # will be a list 
+        self.model_path = model_path
         
         with open(os.path.join(os.path.dirname(model_path), 'channel_map.json'), 'r') as f:
             channel_map_file = f.read()
@@ -265,20 +266,28 @@ class ChannelVIT:
         self.model.eval()
         self.model.to(self.device)
     
-    def set_dataset(self, dataset_name):
+    def set_dataset(self, dataset_name, model_path):
         if dataset_name == "Allen":
-            self.dataset_channels = ['nucleus', 'membrane', 'protein']
+            if '_75ds' in model_path or '_10ds' in model_path:
+                self.dataset_channels = ['nucleus', 'cell body', 'protein']
+            else:
+                self.dataset_channels = ['nucleus', 'membrane', 'protein']
         elif dataset_name == "CP":
-            self.dataset_channels = ['nucleus', 'cp2', 'er', 'cp4', 'cp5']
+            if '_75ds' in model_path or '_10ds' in model_path:
+                self.dataset_channels = ['nucleus', 'endoplasmic reticulum', 'RNA', 'golgi body', 'mitochondria']
+            else:
+                self.dataset_channels = ['nucleus', 'cp2', 'er', 'cp4', 'cp5']
         elif dataset_name == "HPA":
-            self.dataset_channels = ['microtubules', 'protein', 'nucleus', 'er']
+            if '_75ds' in model_path or '_10ds' in model_path:
+                self.dataset_channels = ['microtubules', 'protein', 'nucleus', 'endoplasmic reticulum']
+            else:
+                self.dataset_channels = ['microtubules', 'protein', 'nucleus', 'er']
         else:
             raise ValueError("Dataset name supplied is not supported. This class only supports CHAMMIv1 benchmarking.")
     
     def __call__(self, images):
-        extra_tokens = {
-                    "channels": [self.channel_map[chan] for chan in self.dataset_channels]
-            }
+        channel_ids = [[self.channel_map[chan] if chan in self.dataset_channels else 0 for chan in self.dataset_channels]] * len(images)
+        channel_masks = [[True for _ in range(images.shape[1])]]*len(images)
         with torch.no_grad():
             images = images.to(self.device)
-            return self.model(images, extra_tokens=extra_tokens).cpu().detach().numpy()
+            return self.model(images, channel_ids, channel_masks).cpu().detach().numpy()

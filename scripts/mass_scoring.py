@@ -8,14 +8,18 @@ from collections import defaultdict
 
 # SCORES_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_scores'
 # FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
-ROOT_DIR = '/scr/data/CHAMMI/dataset'
+# ROOT_DIR = '/scr/data/CHAMMI/dataset'
+
+# SCORES_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/testing_scores'
+# FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/testing_features'
+# ROOT_DIR = '/scr/data/CHAMMI/dataset'
 
 # CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/models'
 # FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/features'
 
 SCORES_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/scores'
 FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/features'
-# ROOT_DIR = '/scr/data/CHAMMI/dataset'
+ROOT_DIR = '/scr/data/CHAMMI/dataset'
 
 # SCORES_ROOT = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/chammi_scores'
 # FEATURES_ROOT    = '/hdd/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
@@ -51,6 +55,7 @@ def get_dinov2_checkpoints(evaled_models: list):
 def get_channelvit_checkpoints(evaled_models: list):
     scored_models = os.listdir(SCORES_ROOT)
     yet_to_score = filter(lambda x: x not in scored_models, evaled_models)
+    # yet_to_score = filter(lambda x: '9c' in x, evaled_models)
     
     to_eval_score = defaultdict(list)
     for model in yet_to_score:

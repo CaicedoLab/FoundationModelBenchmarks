@@ -14,6 +14,8 @@ from models.utils import NoiseInjection, self_normalize
 
 from dataclasses import dataclass
 
+from sklearn.preprocessing import normalize
+
 @dataclass
 class ExtractionData:
     dataset_name: str
@@ -33,14 +35,15 @@ def process_dataset(gpu_queue:Queue, data: ExtractionData):
     model = get_model(data.model_path, data.model_check, data.model_size, data.checkpoint, device)
     
     if isinstance(model, ChannelVIT):
-        model.set_dataset(data.dataset_name)
+        model.set_dataset(data.dataset_name, data.model_path)
     transform = transforms.Compose([transforms.ConvertImageDtype(torch.float32), NoiseInjection(), self_normalize()])
     dataset = configure_dataset(data.root_dir, data.dataset_name, transform=transform)
     train_dataloader = DataLoader(dataset, batch_size=data.batch_size, shuffle=False)
 
     all_feat = []
+
     for _, (images, _) in enumerate(train_dataloader):
-        all_feat.append(model(images))
+        all_feat.append(normalize(model(images), axis=1))
 
     all_feat = np.concatenate(all_feat)
 
@@ -63,7 +66,13 @@ def main():
     feature_dir, root_dir, model_path, model_check, model_size, gpu, batch_size, checkpoint = parse_args()
         
     dataset_names = ["Allen", "CP", "HPA"]
-    # dataset_names = ["Allen"]
+
+    if "_allen" in model_path:
+        dataset_names = ["Allen"]
+    elif "_hpa" in model_path:
+        dataset_names = ["HPA"]
+    elif "_cp" in model_path:
+        dataset_names = ["CP"]
 
     extraction_data = []
 
