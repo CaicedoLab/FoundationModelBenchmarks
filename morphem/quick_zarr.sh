@@ -1,0 +1,1 @@
+fabric run --strategy=ddp --devices=8 --accelerator=cuda zarr_features.py --root-dir /scr/data/CHAMMI/dataset/ --out-dir ./testy --model dinov2 --model-path /home/MORGRIDGE/jpeters/vault/projects/foundation_models_and_benchmarking/baseline/a63fc9b_0.4_mask_prob/ --batch-size 32

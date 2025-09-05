@@ -65,9 +65,9 @@ def get_channelvit_checkpoints(models: list, evaled_models: list):
         if model in evaled_models:
             continue
             
-        remove = ["10ds", "75ds"]
-        if not any(crit in model for crit in remove):
-            continue     
+        # remove = ["10ds", "75ds"]
+        # if not any(crit in model for crit in remove):
+        #     continue     
     
         checkpoint = os.path.join(CHECKPOINTS_ROOT, model, 'checkpoint.pth') 
         checkpoints_to_eval.append((model, checkpoint))
@@ -86,7 +86,7 @@ def main(dry_run: bool, model: str):
         list(map(print, checkpoints_to_eval))
         return
     
-    num_gpu = ['0,1,2', '3,4,5']
+    num_gpu = ['1,2,3']
     with Manager() as manager:
         q = manager.Queue()
         

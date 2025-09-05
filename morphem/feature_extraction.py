@@ -36,7 +36,7 @@ def process_dataset(gpu_queue:Queue, data: ExtractionData):
     
     if isinstance(model, ChannelVIT):
         model.set_dataset(data.dataset_name, data.model_path)
-    transform = transforms.Compose([transforms.ConvertImageDtype(torch.float32), NoiseInjection(), self_normalize()])
+    transform = transforms.Compose([transforms.ConvertImageDtype(torch.float32), self_normalize()])
     dataset = configure_dataset(data.root_dir, data.dataset_name, transform=transform)
     train_dataloader = DataLoader(dataset, batch_size=data.batch_size, shuffle=False)
 

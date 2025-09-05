@@ -36,6 +36,8 @@ eza = ">=0.23.0,<0.24"
 
 [pypi-dependencies]
 "CHAMMI" = { path = ".", editable = true }
+lightning = ">=2.5.4, <3"
+zarr = ">=3.1.2, <4"
 
 [feature.score.dependencies]
 faiss-gpu = "1.7.2.*"
@@ -55,8 +57,12 @@ faiss-cpu = "*"
 timm = ">=1.0.15,<2"
 omegaconf = ">=2.3.0,<3"
 
+[feature.extract.pypi-dependencies]
+rich = ">=14.0.0, <15"
+
 [feature.submit.pypi-dependencies]
 argparse = ">=1.4.0, <2"
+rich = ">=14.0.0, <15"
 
 [feature.submit.dependencies]
 snakemake = ">=9.6.2,<10"

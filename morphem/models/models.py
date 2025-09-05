@@ -15,7 +15,7 @@ from models.dinov2.dinov2.utils.utils import load_pretrained_weights
 import models.channel_vit_dino.vision_transformer as channelvit 
 
 class DinoV2Models(torch.nn.Module):
-    def __init__(self, model_path, checkpoint, model_size, device):
+    def __init__(self, model_path, checkpoint, model_size, device=None):
         super().__init__()
         
         if model_size == 'ngram':
@@ -56,7 +56,8 @@ class DinoV2Models(torch.nn.Module):
         self.model, _ = build_model_from_cfg(cfg, only_teacher=True) # type: ignore
         load_pretrained_weights(self.model, checkpoint_path, 'teacher')
         self.model.eval()
-        self.model.to(device)
+        if device is not None:
+            self.model.to(device)
         self.feature_file = "pretrained_dinov2_vit_features.npy"
 
     def boc_ngram(self, samples: torch.Tensor):
@@ -117,7 +118,8 @@ class DinoV2Models(torch.nn.Module):
 
     def forward(self, samples: torch.Tensor):
         # return nn.functional.normalize(self.model(samples), dim=1, p=2
-        samples = samples.to(self.device)
+        if self.device:
+            samples = samples.to(self.device)
         if not self.is_ngram:
             return self.boc(samples).cpu().detach().numpy()
         else:
