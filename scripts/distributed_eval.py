@@ -8,11 +8,11 @@ import argparse
 # CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/baseline'
 # FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/testing_features'
 
-# CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/dino_artifacts'
-# FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
+CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/dino_artifacts'
+FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/foundation_models_and_benchmarking/chammi_features'
 
-CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/models'
-FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/features'
+# CHECKPOINTS_ROOT = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/models'
+# FEATURES_ROOT    = '/mnt/cephfs/mir/jcaicedo/projects/channel_vit_dinov1/features'
 
 def eval_checkpoint(q: Queue, model_check, model_arch):
     model, checkpoint = model_check
@@ -22,7 +22,7 @@ def eval_checkpoint(q: Queue, model_check, model_arch):
     
     if model_arch == 'dinov2':
         result = subprocess.run(
-                    f"extract --root-dir /scr/data/CHAMMI/dataset/ --feat-dir {os.path.join(FEATURES_ROOT, checkpoint, model)} --model dinov2 --model-size small --model-path {os.path.join(CHECKPOINTS_ROOT, model)} --gpu {gpu} --batch-size 32 --checkpoint {checkpoint} ",
+                    f"extract --root-dir /scr/data/CHAMMI/dataset/ --feat-dir {os.path.join(FEATURES_ROOT, checkpoint, model)} --model ngram --model-size small --model-path {os.path.join(CHECKPOINTS_ROOT, model)} --gpu {gpu} --batch-size 32 --checkpoint {checkpoint} ",
                     shell=True,
                     # capture_output=True,
                     check=True,
@@ -50,7 +50,8 @@ def get_dinov2_checkpoints(models: list, evaled_models: list):
         eval_dir = os.path.join(model_dir, 'eval')
         checkpoints = os.listdir(eval_dir)
         checkpoints = [check for check in checkpoints if 'final' in check]
-            
+        if 'no' not in model:
+            continue
         if model in evaled_models:
             evaled_checkpoints = os.listdir(os.path.join(FEATURES_ROOT, model))
             non_eval_checkpoints = [checkpoint for checkpoint in checkpoints if checkpoint not in evaled_checkpoints]
@@ -65,9 +66,9 @@ def get_channelvit_checkpoints(models: list, evaled_models: list):
         if model in evaled_models:
             continue
             
-        # remove = ["10ds", "75ds"]
-        # if not any(crit in model for crit in remove):
-        #     continue     
+        remove = ["10ds"]
+        if not any(crit in model for crit in remove):
+            continue     
     
         checkpoint = os.path.join(CHECKPOINTS_ROOT, model, 'checkpoint.pth') 
         checkpoints_to_eval.append((model, checkpoint))

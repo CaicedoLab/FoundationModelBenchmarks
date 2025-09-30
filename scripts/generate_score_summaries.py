@@ -24,9 +24,7 @@ def main(
     model_names = []
     for root, dirs, files in os.walk(input_directory):
         # if 'final_model' in root and 'logged' not in root:
-        if len(files) > 0:
-            if 'logged' in root:
-                continue
+        if len(files) > 0 and 'knn_l2_full_results.csv' in files:
             model_names.append(os.path.basename(root))
             score_files.append(os.path.join(root, 'knn_l2_full_results.csv'))
     
@@ -34,22 +32,27 @@ def main(
     
     output_tsv = []
     for score_file, model_name in zip(score_files, model_names): 
-        model_arch = score_file.split('/')[-3]
+        # print(score_file)
+        # print(model_name)
+        # print('************************')
+        model_arch = score_file.split('/')[-4]
+        check = model_name
         if model == 'channelvit':
             model_arch = model_name
-            
+        
         if dry_run:
-            print(model_arch)
+            print(model_arch, check)
             continue
         
         score_df = pl.read_csv(score_file)
         scores = score_df['f1_score_macro'].to_list()
         if len(scores) != 9:
             continue
-        row_entry = [dataset, training_style, date, model_arch, model, 0, 0, 0, 0, 0, *scores, 0, pipeline, 0, model_type]
+        row_entry = [dataset, training_style, date, model_arch, check, 0, 0, 0, 0, 0, *scores, 0, pipeline, 0, model_type]
         output_tsv.append(row_entry)
         
-    pl.from_records(output_tsv, orient="row").write_csv(file=output, include_header=False, separator='\t')
+    all_stuff = pl.from_records(output_tsv, orient="row")
+    all_stuff.write_csv(file=output, include_header=False, separator='\t')
     
     
 if __name__ == "__main__":

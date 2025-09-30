@@ -1,0 +1,2 @@
+# python temp_merge_extract.py --root-dir /scr/data/CHAMMI/dataset/ --out-dir /mnt/cephfs/mir/jcaicedo/projects/parcha/27c8bf6_parcha_boc/features/ --model dinov2 --model-path /mnt/cephfs/mir/jcaicedo/projects/parcha/27c8bf6_parcha_boc/checkpoints/final_checkpoint.pt --batch-size 32 
+python temp_merge_extract.py --root-dir /scr/data/CHAMMI/dataset/ --out-dir /mnt/cephfs/mir/jcaicedo/projects/parcha/27c8bf6_parcha_ngram/features/ --model ngram --model-path /mnt/cephfs/mir/jcaicedo/projects/parcha/27c8bf6_parcha_ngram/checkpoints/final_checkpoint.pt --batch-size 32 

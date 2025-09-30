@@ -36,14 +36,17 @@ def process_dataset(gpu_queue:Queue, data: ExtractionData):
     
     if isinstance(model, ChannelVIT):
         model.set_dataset(data.dataset_name, data.model_path)
-    transform = transforms.Compose([transforms.ConvertImageDtype(torch.float32), self_normalize()])
+    if model.is_ngram:
+        model.dataset_name = data.dataset_name
+           
+    transform = transforms.Compose([transforms.ConvertImageDtype(torch.float32), NoiseInjection(), self_normalize()])
     dataset = configure_dataset(data.root_dir, data.dataset_name, transform=transform)
     train_dataloader = DataLoader(dataset, batch_size=data.batch_size, shuffle=False)
 
     all_feat = []
 
     for _, (images, _) in enumerate(train_dataloader):
-        all_feat.append(normalize(model(images), axis=1))
+        all_feat.append(model(images))
 
     all_feat = np.concatenate(all_feat)
 

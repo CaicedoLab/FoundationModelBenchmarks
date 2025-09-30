@@ -1,18 +1,13 @@
 import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
-import numpy as np
 from tqdm import tqdm
-from multiprocessing import Queue, Pool, Manager
 import argparse
 import torch
-import os
 
 from models.models import *
 from utils import *
 from models.utils import NoiseInjection, self_normalize
-
-from dataclasses import dataclass
 
 from sklearn.preprocessing import normalize
 
@@ -32,34 +27,28 @@ def main():
     
     dataset_names = ["Allen", "CP", "HPA"]
 
-    if "_allen" in model_path:
-        dataset_names = ["Allen"]
-    elif "_hpa" in model_path:
-        dataset_names = ["HPA"]
-    elif "_cp" in model_path:
-        dataset_names = ["CP"]
-
     model = get_model(model_path, model_check, 'auto')
-    
+    model.stack_features = True
     model = fabric.setup(model)
-    
+        
     if fabric.global_rank == 0:
-        store = zarr.storage.ZipStore('/scr/jpeters/parcha/a63fc9b_0.4_mask_prob_features.zip', mode='w')    
-    
-    images_added = set()
-    
+        store = zarr.storage.LocalStore(out_dir, read_only=False)    
+        root = zarr.create_group(store, overwrite=True)
+
     for dataset_name in dataset_names:
+        images_added = {}
+        model.dataset_name = dataset_name
         transform = transforms.Compose([transforms.ConvertImageDtype(torch.float32), NoiseInjection(), self_normalize()])
         dataset = configure_dataset(root_dir, dataset_name, transform=transform, target_labels="file_path")
         train_dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
 
         train_dataloader = fabric.setup_dataloaders(train_dataloader)
-
+        
         if fabric.global_rank == 0:
             train_dataloader = tqdm(train_dataloader, desc=f"Processing {dataset_name}", total=len(train_dataloader))
-            
-        for _, (images, file_path) in enumerate(train_dataloader):
-            features = normalize(model(images), axis=1)
+        embedding_shape = None
+        for batch_idx, (images, file_path) in enumerate(train_dataloader):
+            features = model(images)
             dist_features = fabric.all_gather(features)
             batch_paths = [None]*fabric.world_size
             dist.all_gather_object(batch_paths, file_path)
@@ -71,9 +60,36 @@ def main():
                         if file_name in images_added:
                             continue 
                         else:
-                            images_added.add(file_name)
-                            
-                        zarr.create_array(store=store, name=file_name, data=dist_features[gpu, batch, :].cpu().detach().numpy(), compressors=None, write_data=True)
+                            if not embedding_shape:
+                                embedding_shape = dist_features[gpu, batch, :].shape
+                            images_added[file_name] = dist_features[gpu, batch, :].detach().cpu().numpy()
+
+        if fabric.is_global_zero:
+            dataset_group = root.create_group(dataset_name)
+            embeddings_array = dataset_group.create_array(
+                dataset_name,
+                shape=(len(images_added), *embedding_shape),
+                chunks=(1, *embedding_shape), 
+                shards=(1000, *embedding_shape),
+                dtype='float32',
+                compressors=None
+            )        
+            
+            image_index_map = {}
+            tensor_arrs = []
+            for i, (image_name, tensor) in enumerate(images_added.items()):
+                tensor_arrs.append(tensor)
+                # embeddings_array[i] = tensor
+                image_index_map[image_name] = (i, dataset_name)
+            dataset_tensor = np.stack(tensor_arrs)
+            print(f"Saving dataset {dataset_name }")
+            embeddings_array[:, :, :] = dataset_tensor
+            dataset_group.attrs['image_index_map'] = json.dumps(image_index_map)
+            print("Finished saving.")
+        fabric.barrier()
+        
+    if fabric.global_rank == 0:
+        store.close()
         
 def get_model(model_path, model_check, checkpoint):
     if model_check == 'dinov2' or model_check == 'ngram':

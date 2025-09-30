@@ -116,9 +116,9 @@ class SingleCellDataset(Dataset):
         return len(self.metadata)
 
     def prepare(self, idx, image, label, norm_func, mixup=False):
-        #c = self.metadata.loc[idx, "channel"]
-        #image = image[c,...]
-        #image = image[np.newaxis,...]
+        # c = self.metadata.loc[idx, "channel"]
+        # image = image[c,...]
+        # image = image[np.newaxis,...]
         image = norm_func(image)
  
         if mixup:
@@ -135,18 +135,20 @@ class SingleCellDataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        img_name = os.path.join(self.root_dir,
-                                self.metadata.loc[idx, "file_path"])
-        channel_width = self.metadata.loc[idx, 'channel_width']
-        image = skimage.io.imread(img_name)
-        image = fold_channels(image, channel_width)
+        # img_name = os.path.join(self.root_dir,
+        #                         self.metadata.loc[idx, "file_path"])
+        # channel_width = self.metadata.loc[idx, 'channel_width']
+        # image = skimage.io.imread(img_name)
+        # image = fold_channels(image, channel_width)
 
         if self.target_labels is not None:
             labels = self.metadata.loc[idx, self.target_labels]
         else:
             labels = None
         
-        image, labels = self.prepare(idx, image, labels, normalize_scale_for_test, False)
+        return labels
+        # image, labels = self.prepare(idx, image, labels, normalize_scale_for_test, False)
+        # image, labels = self.prepare(idx, image, labels, None, False)
 
         if self.transform:
             image = self.transform(image)

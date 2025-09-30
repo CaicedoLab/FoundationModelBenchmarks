@@ -52,9 +52,15 @@ def run_benchmark(root_dir, dest_dir, feature_dir, feature_file, classifier='knn
         
         if '_allen' in feature_dir and dataset != "Allen":
             continue
-        if '_hpa' in feature_dir and dataset != "HPA":
+        elif '_hpa' in feature_dir and dataset != "HPA":
             continue
-        if '_cp' in feature_dir and dataset != "CP":
+        elif '_cp' in feature_dir and dataset != "CP":
+            continue
+        elif '_Allen' in feature_dir and dataset != "Allen":
+            continue
+        elif '_HPA' in feature_dir and dataset != "HPA":
+            continue
+        elif '_CP' in feature_dir and dataset != "CP":
             continue
         
         features_path  = f'{feature_dir}/{dataset}/{feature_file}'

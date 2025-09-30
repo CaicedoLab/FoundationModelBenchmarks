@@ -24,7 +24,8 @@ class DinoV2Models(torch.nn.Module):
             self.is_ngram = False 
         
         self.device = device
-        
+        self.dataset_name = None
+        self.stack_features = False
         eval_dir = os.path.join(model_path, 'eval')
         checkpoint_dirs = os.listdir(eval_dir)
         if checkpoint == "auto":
@@ -70,13 +71,23 @@ class DinoV2Models(torch.nn.Module):
             ngram = torch.stack([samples[:,entry[0],:,:], samples[:,entry[1],:,:]], dim=1)
             to_concat.append(self.model(ngram))
         
-        return torch.concat(to_concat, dim=1)
+        if self.stack_features:
+            feats = torch.stack(to_concat, dim=1) 
+        else:
+            feats = torch.concat(to_concat, dim=1)
+        return feats
     
     def boc(self, samples: torch.Tensor):
         to_concat = []
         for ch_idx in range(samples.shape[1]):
-            to_concat.append(self.model(samples[:,ch_idx,:,:].unsqueeze(dim=1)))
-        return torch.concat(to_concat, dim=1)
+            embed = self.model(samples[:,ch_idx,:,:].unsqueeze(dim=1))
+            to_concat.append(embed)
+            
+        if self.stack_features:
+            feats = torch.stack(to_concat, dim=1)
+        else:
+            feats = torch.concat(to_concat, dim=1) 
+        return feats
 
     def all_cat(self, samples: torch.Tensor):
         entries = []
@@ -89,7 +100,11 @@ class DinoV2Models(torch.nn.Module):
             ngram = torch.stack([samples[:,entry[0],:,:], samples[:,entry[1],:,:]], dim=1)
             to_concat.append(self.model(ngram).cpu().detach())
         
-        return torch.concat(to_concat, dim=1)
+        if self.stack_features:
+            feats = torch.stack(to_concat, dim=1)
+        else:
+            feats = torch.concat(to_concat, dim=1)
+        return feats
 
     def average_of_diagonal(self, samples: torch.Tensor):
         entries = set()
@@ -114,7 +129,11 @@ class DinoV2Models(torch.nn.Module):
                 
                 to_concat.append((ngram_embed + ngram_rev_embed)/2)
         
-        return torch.concat(to_concat, dim=1)
+        if self.stack_features:
+            feats = torch.stack(to_concat, dim=1)
+        else:
+            feats = torch.concat(to_concat, dim=1)
+        return feats
 
     def forward(self, samples: torch.Tensor):
         # return nn.functional.normalize(self.model(samples), dim=1, p=2
@@ -123,7 +142,14 @@ class DinoV2Models(torch.nn.Module):
         if not self.is_ngram:
             return self.boc(samples).cpu().detach().numpy()
         else:
-            return self.average_of_diagonal(samples).cpu().detach().numpy()
+            if self.dataset_name == "Allen":
+                return self.boc_ngram(samples).cpu().detach().numpy()
+            elif self.dataset_name == "CP":
+                return self.average_of_diagonal(samples).cpu().detach().numpy()
+            elif self.dataset_name == "HPA":
+                return self.all_cat(samples).cpu().detach().numpy()
+            else:   
+                return self.boc_ngram(samples).cpu().detach().numpy()
 
 class ViTClass:
     def __init__(self, weights_path: str, model_size: str, device):
@@ -270,9 +296,6 @@ class ChannelVIT:
     
     def set_dataset(self, dataset_name, model_path):
         if dataset_name == "Allen":
-            if '_75ds' in model_path or '_10ds' in model_path:
-                self.dataset_channels = ['nucleus', 'cell body', 'protein']
-            else:
                 self.dataset_channels = ['nucleus', 'membrane', 'protein']
         elif dataset_name == "CP":
             if '_75ds' in model_path or '_10ds' in model_path:

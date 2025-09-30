@@ -35,7 +35,7 @@ def get_dinov2_checkpoints(evaled_models: list):
         
         checkpoints:list[str] = os.listdir(os.path.join(FEATURES_ROOT, model))
         checkpoints = [tuple(checkpoint.rsplit('_', 1)) for checkpoint in checkpoints]
-
+        print(checkpoints)
         checkpoints.sort(key=lambda x: int(x[-1]))
         for name, check in checkpoints:
             possible_score_path = os.path.join(SCORES_ROOT, model, f'{name}_{check}')
@@ -72,7 +72,7 @@ def get_channelvit_checkpoints(evaled_models: list):
 def main(dry_run: bool, log_off: bool, model_type: str):
     evaled_models = os.listdir(FEATURES_ROOT)
     
-    if model_type == 'dinov2':
+    if model_type == 'dinov2' or model_type == "ngram":
         to_eval_score = get_dinov2_checkpoints(evaled_models)
         feature_file = 'pretrained_dinov2_vit_features.npy'
     elif model_type == 'dinov1':
@@ -81,8 +81,8 @@ def main(dry_run: bool, log_off: bool, model_type: str):
         
     for model in to_eval_score:
         checkpoints = to_eval_score[model]
-        if model_type == 'dinov2':
-            has_final_checkpoint = False
+        if model_type == 'dinov2' or model_type == "ngram":
+            has_final_checkpoint = True
             for check in checkpoints:
                 if 'final_model' in check['dest']:
                     has_final_checkpoint = True
@@ -93,7 +93,7 @@ def main(dry_run: bool, log_off: bool, model_type: str):
             if dry_run:
                     print(model)
             else:
-                if model_type == 'dinov2':
+                if model_type == 'dinov2' or model_type == "ngram":
                     checkpoints = sorted(checkpoints, key=lambda x: int(x['check']))
                 
                 for check in checkpoints:
@@ -106,7 +106,7 @@ def main(dry_run: bool, log_off: bool, model_type: str):
                         text=True
                     )
                 
-                    if not log_off and model_type == "dinov2":
+                    if not log_off and (model_type == "dinov2" or model_type == "ngram"):
                         score_path = os.path.join(check['dest'], 'knn_l2_full_results.csv')
                         log_script = f"python ./log_score.py --run-id {model} --iteration {check['check']} --score-path {score_path}"                
                         result = subprocess.run(
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Bulk CHAMMI scoring")
     parser.add_argument("-d", "--dry-run", action="store_true", help="Perform a dry run without making actual changes")
     parser.add_argument('-l', "--log-off", action="store_true", help="Disable logging to wandb, only used with dinov2 models. Ignored otherwise.")
-    parser.add_argument('-m', '--model-type', default='dinov2', help='The type of model that can be evaluated. For channelvit use dionv1', choices=['dionv2', 'dinov1'])
+    parser.add_argument('-m', '--model-type', default='dinov2', help='The type of model that can be evaluated. For channelvit use dionv1', choices=['dionv2', 'dinov1', 'ngram'])
     args = parser.parse_args()
     
     main(args.dry_run, args.log_off, args.model_type)
